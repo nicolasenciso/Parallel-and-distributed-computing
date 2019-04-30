@@ -209,7 +209,7 @@ int main( int argc, char** argv ) {
     auto endClock = chrono::steady_clock::now();
 
     auto finalClock = endClock - startClock;
-    cout << NUM_THREADS << "\t" << chrono::duration <double, milli> (finalClock).count() << " ms" <<"\n" <<endl;
+    cout << KERNEL_SIZE << "\t" << NUM_THREADS << "\t" << chrono::duration <double, milli> (finalClock).count() << " ms" <<"\n" <<endl;
     imwrite(imageToSave, outputIMG);
 
     return 0;
