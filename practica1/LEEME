@@ -1,0 +1,18 @@
+Efecto de desenfoque Blur gaussiano
+
+Presentando por:
+
+-Nicolas Ricardo Enciso  nricardoe@unal.edu.co
+-Oscar Fabian Mendez  ofmendez@unal.edu.co
+
+El archivo cpp blur-effect.cpp contiene el código con el cual se aplica el efecto de desenfoque blur en una imagen. Se hace uso de openCV para el tratamiento de las imagenes, así como otras librerias nativas de c++. En el archivo se encuentra comentado la forma en la cual se puede ejecutar, con los flags necesarios que usa opencv, así como la forma en la que se pasan los argumentos al programa, los cuales son la imagen de entrada, el nombre del archivo de salida, el número de hilos y el tamaño del kernel filtro.
+
+g++ blur-effect.cpp -o y `pkg-config --cflags --libs opencv` -lpthread
+./y hdLancia.jpg blur/hd-blur.jpg $kernelsize $threads | tee -a times/hd-times.in 
+
+donde hdLancia es la imagen de entrada, blur/hd-blur el archivo resultado con desenfoque, kernelsize el tamaño del filtro y threads el número de hilos a usar
+
+El archivo Shell bash script_ejecutar_todo.sh ejecuta 5 veces el archivo, en cada una 12 veces, de acuerdo a 5 la cantidad de hilos que se pedían intentar (1,2,4,8,16) y 12 el intervalo de valores para el tamaño del kernel (3 a 15). Lo anterior se corre por cada tamaño de imagen (HD, FHD o 4k). El archivo ejecuta por completa toda la prueba con los 3 tamaños de imagen y todas las combinaciones posibles de los parámetros que se pedían.
+
+Adicional está el pdf reporte, el cual explica la forma en la que se aplicó el algoritmo, su paralelización y los gráficos de resultados
+
