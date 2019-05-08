@@ -139,43 +139,41 @@ void makeBlurEffect(int NUM_THREADS){
     double greenPixel;
 
     omp_set_num_threads(NUM_THREADS);
+    int i,j;
 
-    #pragma omp parallel
-    {
-        #pragma omp for
-        {
-            for(int i = 0; i < SIZE_IMG_ROWS; i++){
+    //#pragma omp parallel for private (i,j)
+        for(i = 0; i < SIZE_IMG_ROWS; i++){
 
-                for(int j = 0; j < SIZE_IMG_COLS; j++){
+            for(j = 0; j < SIZE_IMG_COLS; j++){
 
-                    redPixel = 0;
-                    bluePixel = 0;
-                    greenPixel = 0;
+                redPixel = 0;
+                bluePixel = 0;
+                greenPixel = 0;
 
-                    kernelLimits = limitSetter(i, j, KERNEL_SIZE);
+                kernelLimits = limitSetter(i, j, KERNEL_SIZE);
 
-                    for(int kernelX = kernelLimits[0]; kernelX < kernelLimits[1]; kernelX++){
+                for(int kernelX = kernelLimits[0]; kernelX < kernelLimits[1]; kernelX++){
 
-                        for(int kernelY = kernelLimits[2]; kernelY < kernelLimits[3]; kernelY++){
+                    for(int kernelY = kernelLimits[2]; kernelY < kernelLimits[3]; kernelY++){
 
-                            bluePixel += inputIMG.at<Vec3b>(kernelX + i, kernelY + j)[0] * 
-                                        KERNEL_MATRIX[kernelX + KERNEL_OFFSET] [kernelY + KERNEL_OFFSET];
-                            
-                            greenPixel += inputIMG.at<Vec3b>(kernelX + i, kernelY + j)[1] * 
-                                        KERNEL_MATRIX[kernelX + KERNEL_OFFSET] [kernelY + KERNEL_OFFSET];
-
-                            redPixel += inputIMG.at<Vec3b>(kernelX + i, kernelY + j)[2] * 
-                                        KERNEL_MATRIX[kernelX + KERNEL_OFFSET] [kernelY + KERNEL_OFFSET];
-                        }
+                        
+                        bluePixel += inputIMG.at<Vec3b>(kernelX + i, kernelY + j)[0] * 
+                                    KERNEL_MATRIX[kernelX + KERNEL_OFFSET] [kernelY + KERNEL_OFFSET];
+                
+                        greenPixel += inputIMG.at<Vec3b>(kernelX + i, kernelY + j)[1] * 
+                                    KERNEL_MATRIX[kernelX + KERNEL_OFFSET] [kernelY + KERNEL_OFFSET];
+                    
+                        redPixel += inputIMG.at<Vec3b>(kernelX + i, kernelY + j)[2] * 
+                                    KERNEL_MATRIX[kernelX + KERNEL_OFFSET] [kernelY + KERNEL_OFFSET];
                     }
-
-                    outputIMG.at<Vec3b>(i, j)[0] = bluePixel;
-                    outputIMG.at<Vec3b>(i, j)[1] = greenPixel;
-                    outputIMG.at<Vec3b>(i, j)[2] = redPixel;
                 }
+
+                outputIMG.at<Vec3b>(i, j)[0] = bluePixel;
+                outputIMG.at<Vec3b>(i, j)[1] = greenPixel;
+                outputIMG.at<Vec3b>(i, j)[2] = redPixel;
             }
         }
-    }
+
 }
 
 int main( int argc, char** argv ) {
