@@ -1,13 +1,13 @@
 #include <iostream>
 #include <stdlib.h>
 #include <cmath>
-#include <pthread.h>
+#include <omp.h>
 #include <chrono>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-//g++ blur-effect.cpp -o w `pkg-config --cflags --libs opencv` -lpthread 
+//g++ blur-effect.cpp -o w `pkg-config --cflags --libs opencv` -fopenmp
 //./w sl.jpg results2/hd-blurred.jpg $kernelSize $num_threads | tee -a times.in
 
 using namespace std;
@@ -131,43 +131,49 @@ double **createKernelMatrix(int KERNEL_SIZE){
 // - The functions has to be a pointer to void due to the argument parameter for pthread.
 // - The main idea is allocate to each thread, a number multiple of the total number 
 //   of threads n, so the ith thread will have to process every jth + n row
-void *makeBlurEffect(void *id){
+void makeBlurEffect(int NUM_THREADS){
     int *kernelLimits;
 
     double redPixel; 
     double bluePixel;
     double greenPixel;
 
-    long threadID = (long) id;
+    omp_set_num_threads(NUM_THREADS);
 
-    for(int i = threadID; i < SIZE_IMG_ROWS; i += NUM_THREADS){
+    #pragma omp parallel
+    {
+        #pragma omp for
+        {
+            for(int i = 0; i < SIZE_IMG_ROWS; i++){
 
-        for(int j = 0; j < SIZE_IMG_COLS; j++){
+                for(int j = 0; j < SIZE_IMG_COLS; j++){
 
-            redPixel = 0;
-            bluePixel = 0;
-            greenPixel = 0;
+                    redPixel = 0;
+                    bluePixel = 0;
+                    greenPixel = 0;
 
-            kernelLimits = limitSetter(i, j, KERNEL_SIZE);
+                    kernelLimits = limitSetter(i, j, KERNEL_SIZE);
 
-            for(int kernelX = kernelLimits[0]; kernelX < kernelLimits[1]; kernelX++){
+                    for(int kernelX = kernelLimits[0]; kernelX < kernelLimits[1]; kernelX++){
 
-                for(int kernelY = kernelLimits[2]; kernelY < kernelLimits[3]; kernelY++){
+                        for(int kernelY = kernelLimits[2]; kernelY < kernelLimits[3]; kernelY++){
 
-                    bluePixel += inputIMG.at<Vec3b>(kernelX + i, kernelY + j)[0] * 
-                                KERNEL_MATRIX[kernelX + KERNEL_OFFSET] [kernelY + KERNEL_OFFSET];
-                    
-                    greenPixel += inputIMG.at<Vec3b>(kernelX + i, kernelY + j)[1] * 
-                                KERNEL_MATRIX[kernelX + KERNEL_OFFSET] [kernelY + KERNEL_OFFSET];
+                            bluePixel += inputIMG.at<Vec3b>(kernelX + i, kernelY + j)[0] * 
+                                        KERNEL_MATRIX[kernelX + KERNEL_OFFSET] [kernelY + KERNEL_OFFSET];
+                            
+                            greenPixel += inputIMG.at<Vec3b>(kernelX + i, kernelY + j)[1] * 
+                                        KERNEL_MATRIX[kernelX + KERNEL_OFFSET] [kernelY + KERNEL_OFFSET];
 
-                    redPixel += inputIMG.at<Vec3b>(kernelX + i, kernelY + j)[2] * 
-                                KERNEL_MATRIX[kernelX + KERNEL_OFFSET] [kernelY + KERNEL_OFFSET];
+                            redPixel += inputIMG.at<Vec3b>(kernelX + i, kernelY + j)[2] * 
+                                        KERNEL_MATRIX[kernelX + KERNEL_OFFSET] [kernelY + KERNEL_OFFSET];
+                        }
+                    }
+
+                    outputIMG.at<Vec3b>(i, j)[0] = bluePixel;
+                    outputIMG.at<Vec3b>(i, j)[1] = greenPixel;
+                    outputIMG.at<Vec3b>(i, j)[2] = redPixel;
                 }
             }
-
-            outputIMG.at<Vec3b>(i, j)[0] = bluePixel;
-            outputIMG.at<Vec3b>(i, j)[1] = greenPixel;
-            outputIMG.at<Vec3b>(i, j)[2] = redPixel;
         }
     }
 }
@@ -186,25 +192,11 @@ int main( int argc, char** argv ) {
 
     KERNEL_MATRIX = createKernelMatrix(KERNEL_SIZE);
 
-    pthread_t threads[NUM_THREADS];
-    int thread_error;
-
     //Starting the threads and setting work
     auto startClock = chrono::steady_clock::now();
 
-    for(int i = 0; i < NUM_THREADS; i++){
-        thread_error = pthread_create(&threads[i], NULL, makeBlurEffect, (void*)i );
+    makeBlurEffect(NUM_THREADS);
 
-        if(thread_error){
-            perror("Error: ");
-            exit(-1);
-        }
-    }
-
-    //Stop threads
-    for(int i = 0; i < NUM_THREADS; i++){
-        pthread_join(threads[i], NULL);
-    }
     //clock_t endClock = clock();
     auto endClock = chrono::steady_clock::now();
 
