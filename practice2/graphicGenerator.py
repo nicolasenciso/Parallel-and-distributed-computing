@@ -39,7 +39,16 @@ def makePoints():
 
 def graphicTime(totalDic):
     count = 1
+    docutype = 0
+    typetxt = ''
     for dictionary in totalDic:
+        docutype += 1
+        if docutype == 1:
+            typetxt = 'hd'
+        elif docutype == 2:
+            typetxt = 'fhd'
+        elif docutype == 3:
+            typetxt = '4k'
         for i in range(3,16):
             points = dictionary[i]
             threads, time = [],[]
@@ -52,14 +61,23 @@ def graphicTime(totalDic):
             plt.tight_layout()
             plt.title(' Time consuming vs threads-kernel size of '+str(i))
             plt.grid()
-            plt.savefig('graphics/timevsthread/'+str(count)+'.png')
+            plt.savefig('graphics/timevsthread/'+str(typetxt)+'-'+str(count)+'.png')
             plt.clf()
             count += 1
 
 def graphicsSpeedUp(totalDic):
     count = 1
     speed = 0
+    docutype = 0
+    typetxt = ''
     for dictionary in totalDic:
+        docutype += 1
+        if docutype == 1:
+            typetxt = 'hd'
+        elif docutype == 2:
+            typetxt = 'fhd'
+        elif docutype == 3:
+            typetxt = '4k'
         for i in range(3,16):
             points = dictionary[i]
             threads, time = [],[]
@@ -74,7 +92,7 @@ def graphicsSpeedUp(totalDic):
             plt.tight_layout()
             plt.title(' Speed Up vs threads-kernel size of '+str(i))
             plt.grid()
-            plt.savefig('graphics/speedupvsthread/'+str(count)+'.png')
+            plt.savefig('graphics/speedupvsthread/'+str(typetxt)+'-'+str(count)+'.png')
             plt.clf()
             count += 1
 
