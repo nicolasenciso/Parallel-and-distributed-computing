@@ -13,7 +13,7 @@ def makePoints():
         dictionary[int(auxLine[0])].append((int(auxLine[1]),time))
     txtfile.close()
     totalDic.append(dictionary)
-    txtfile = open('times/hd-times.txt','r')
+    txtfile = open('times/fhd-times.txt','r')
     dictionary = {}
     for i in range(3,16):
         dictionary[i] = []
@@ -24,7 +24,7 @@ def makePoints():
         dictionary[int(auxLine[0])].append((int(auxLine[1]),time))
     txtfile.close()
     totalDic.append(dictionary)
-    txtfile = open('times/hd-times.txt','r')
+    txtfile = open('times/4k-times.txt','r')
     dictionary = {}
     for i in range(3,16):
         dictionary[i] = []
