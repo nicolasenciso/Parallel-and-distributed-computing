@@ -7,7 +7,7 @@ kernelsize=3
 
 while [ $kernelsize -le 15 ]
 do  
-    ./y hdLancia.jpg blur/hd-blur.jpg $kernelsize $threads | tee -a times/hd-times.in    
+    ./y hdLancia.jpg blur/hd-blur.jpg $kernelsize $threads | tee -a times/hd-times.txt    
     kernelsize=$((kernelsize+1))
 done
 threads=2
@@ -15,7 +15,7 @@ kernelsize=3
 
 while [ $kernelsize -le 15 ]
 do  
-    ./y hdLancia.jpg blur/hd-blur.jpg $kernelsize $threads | tee -a times/hd-times.in    
+    ./y hdLancia.jpg blur/hd-blur.jpg $kernelsize $threads | tee -a times/hd-times.txt    
     kernelsize=$((kernelsize+1))
 done
 threads=4
@@ -23,7 +23,7 @@ kernelsize=3
 
 while [ $kernelsize -le 15 ]
 do  
-    ./y hdLancia.jpg blur/hd-blur.jpg $kernelsize $threads | tee -a times/hd-times.in    
+    ./y hdLancia.jpg blur/hd-blur.jpg $kernelsize $threads | tee -a times/hd-times.txt   
     kernelsize=$((kernelsize+1))
 done
 threads=8
@@ -31,7 +31,7 @@ kernelsize=3
 
 while [ $kernelsize -le 15 ]
 do  
-    ./y hdLancia.jpg blur/hd-blur.jpg $kernelsize $threads | tee -a times/hd-times.in    
+    ./y hdLancia.jpg blur/hd-blur.jpg $kernelsize $threads | tee -a times/hd-times.txt    
     kernelsize=$((kernelsize+1))
 done
 threads=16
@@ -39,7 +39,7 @@ kernelsize=3
 
 while [ $kernelsize -le 15 ]
 do  
-    ./y hdLancia.jpg blur/hd-blur.jpg $kernelsize $threads | tee -a times/hd-times.in    
+    ./y hdLancia.jpg blur/hd-blur.jpg $kernelsize $threads | tee -a times/hd-times.txt    
     kernelsize=$((kernelsize+1))
 done
 
@@ -49,7 +49,7 @@ kernelsize=3
 
 while [ $kernelsize -le 15 ]
 do  
-    ./y fhdLancia.jpg blur/full_hd-blur.jpg $kernelsize $threads | tee -a times/fhd-times.in    
+    ./y fhdLancia.jpg blur/full_hd-blur.jpg $kernelsize $threads | tee -a times/fhd-times.txt    
     kernelsize=$((kernelsize+1))
 done
 threads=2
@@ -57,7 +57,7 @@ kernelsize=3
 
 while [ $kernelsize -le 15 ]
 do  
-    ./y fhdLancia.jpg blur/full_hd-blur.jpg $kernelsize $threads | tee -a times/fhd-times.in    
+    ./y fhdLancia.jpg blur/full_hd-blur.jpg $kernelsize $threads | tee -a times/fhd-times.txt    
     kernelsize=$((kernelsize+1))
 done
 threads=4
@@ -65,7 +65,7 @@ kernelsize=3
 
 while [ $kernelsize -le 15 ]
 do  
-    ./y fhdLancia.jpg blur/full_hd-blur.jpg $kernelsize $threads | tee -a times/fhd-times.in    
+    ./y fhdLancia.jpg blur/full_hd-blur.jpg $kernelsize $threads | tee -a times/fhd-times.txt    
     kernelsize=$((kernelsize+1))
 done
 threads=8
@@ -73,7 +73,7 @@ kernelsize=3
 
 while [ $kernelsize -le 15 ]
 do  
-    ./y fhdLancia.jpg blur/full_hd-blur.jpg $kernelsize $threads | tee -a times/fhd-times.in    
+    ./y fhdLancia.jpg blur/full_hd-blur.jpg $kernelsize $threads | tee -a times/fhd-times.txt    
     kernelsize=$((kernelsize+1))
 done
 threads=16
@@ -81,7 +81,7 @@ kernelsize=3
 
 while [ $kernelsize -le 15 ]
 do  
-    ./y fhdLancia.jpg blur/full_hd-blur.jpg $kernelsize $threads | tee -a times/fhd-times.in    
+    ./y fhdLancia.jpg blur/full_hd-blur.jpg $kernelsize $threads | tee -a times/fhd-times.txt    
     kernelsize=$((kernelsize+1))
 done
         
@@ -92,7 +92,7 @@ kernelsize=3
 
 while [ $kernelsize -le 15 ]
 do  
-    ./y 4kLancia.jpg blur/4k-blur.jpg $kernelsize $threads | tee -a times/4k-times.in
+    ./y 4kLancia.jpg blur/4k-blur.jpg $kernelsize $threads | tee -a times/4k-times.txt
     kernelsize=$((kernelsize+1))
 done
 threads=2
@@ -100,7 +100,7 @@ kernelsize=3
 
 while [ $kernelsize -le 15 ]
 do  
-    ./y 4kLancia.jpg blur/4k-blur.jpg $kernelsize $threads | tee -a times/4k-times.in
+    ./y 4kLancia.jpg blur/4k-blur.jpg $kernelsize $threads | tee -a times/4k-times.txt
     kernelsize=$((kernelsize+1))
 done
 threads=4
@@ -108,7 +108,7 @@ kernelsize=3
 
 while [ $kernelsize -le 15 ]
 do  
-    ./y 4kLancia.jpg blur/4k-blur.jpg $kernelsize $threads | tee -a times/4k-times.in
+    ./y 4kLancia.jpg blur/4k-blur.jpg $kernelsize $threads | tee -a times/4k-times.txt
     kernelsize=$((kernelsize+1))
 done
 threads=8
@@ -116,7 +116,7 @@ kernelsize=3
 
 while [ $kernelsize -le 15 ]
 do  
-    ./y 4kLancia.jpg blur/4k-blur.jpg $kernelsize $threads | tee -a times/4k-times.in
+    ./y 4kLancia.jpg blur/4k-blur.jpg $kernelsize $threads | tee -a times/4k-times.txt
     kernelsize=$((kernelsize+1))
 done
 threads=16
@@ -124,6 +124,6 @@ kernelsize=3
 
 while [ $kernelsize -le 15 ]
 do  
-    ./y 4kLancia.jpg blur/4k-blur.jpg $kernelsize $threads | tee -a times/4k-times.in
+    ./y 4kLancia.jpg blur/4k-blur.jpg $kernelsize $threads | tee -a times/4k-times.txt
     kernelsize=$((kernelsize+1))
 done
