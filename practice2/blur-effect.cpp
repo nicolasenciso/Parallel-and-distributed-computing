@@ -1,13 +1,13 @@
 #include <iostream>
 #include <stdlib.h>
 #include <cmath>
-#include <omp.h>
+#include <pthread.h>
 #include <chrono>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-//g++ blur-effect.cpp -o w `pkg-config --cflags --libs opencv` -fopenmp
+//g++ blur-effect.cpp -o w `pkg-config --cflags --libs opencv` -lpthread 
 //./w sl.jpg results2/hd-blurred.jpg $kernelSize $num_threads | tee -a times.in
 
 using namespace std;
@@ -131,85 +131,45 @@ double **createKernelMatrix(int KERNEL_SIZE){
 // - The functions has to be a pointer to void due to the argument parameter for pthread.
 // - The main idea is allocate to each thread, a number multiple of the total number 
 //   of threads n, so the ith thread will have to process every jth + n row
-int SIZE_ROW = inputIMG.rows;
-int SIZE_COL = inputIMG.cols;
-
-void makeBlurEffect(int NUM_THREADS){
+void *makeBlurEffect(void *id){
     int *kernelLimits;
 
+    double redPixel; 
+    double bluePixel;
+    double greenPixel;
+
+    long threadID = (long) id;
+
+    for(int i = threadID; i < SIZE_IMG_ROWS; i += NUM_THREADS){
+
+        for(int j = 0; j < SIZE_IMG_COLS; j++){
+
+            redPixel = 0;
+            bluePixel = 0;
+            greenPixel = 0;
+
+            kernelLimits = limitSetter(i, j, KERNEL_SIZE);
     
+            for(int kernelX = kernelLimits[0]; kernelX < kernelLimits[1]; kernelX++){
 
-    omp_set_num_threads(NUM_THREADS);
-    int i,j;
-   
-    int limitImgX = SIZE_IMG_ROWS - 1;
-    int limitImgY = SIZE_IMG_COLS - 1;
-    int KERNEL_OFFSET = KERNEL_SIZE / 2;
+                for(int kernelY = kernelLimits[2]; kernelY < kernelLimits[3]; kernelY++){
 
-    //int kernelX, kernelY;
-        
-        #pragma omp parallel for private(i,j) schedule(static,SIZE_IMG_ROWS/NUM_THREADS)
-        for(i = KERNEL_OFFSET; i < SIZE_IMG_ROWS; i++){
-        
-            for(j = KERNEL_OFFSET; j < SIZE_IMG_COLS; j++){
-                int xStart=0,xEnd=0, yStart=0, yEnd=0;
-                double redPixel = 0; 
-                double bluePixel = 0;
-                double greenPixel = 0;
-
-                //#pragma omp atomic
-                //kernelLimits = (limitSetter(i, j, KERNEL_SIZE));    
-                if( i + KERNEL_OFFSET > limitImgX){
-                xStart = 0;
-                xEnd = (limitImgX - i) + KERNEL_OFFSET;
-
-                }else if(i - KERNEL_OFFSET < 0){
-                    xStart = KERNEL_OFFSET - i;
-                    xEnd = KERNEL_SIZE;
-                }else{
-                    xStart = 0;
-                    xEnd = KERNEL_SIZE;
-                }
-
-                if(j + KERNEL_OFFSET > limitImgY){
-                yStart = 0;
-                yEnd = (limitImgY - j) + KERNEL_OFFSET;
-
-                }else if(j - KERNEL_OFFSET < 0 ){
-                    yStart = KERNEL_OFFSET - j;
-                    yEnd = KERNEL_SIZE;
+                    bluePixel += inputIMG.at<Vec3b>(kernelX + i, kernelY + j)[0] * 
+                                KERNEL_MATRIX[kernelX + 0] [kernelY + 0];
                     
-                }else{
-                    yStart = 0;
-                    yEnd = KERNEL_SIZE;
-                }
-                
-                //#pragma omp parallel for private (kernelX,kernelY)
-                for(int kernelX = xStart; kernelX < xEnd; kernelX++){
+                    greenPixel += inputIMG.at<Vec3b>(kernelX + i, kernelY + j)[1] * 
+                                KERNEL_MATRIX[kernelX + 0] [kernelY + 0];
 
-                    for(int kernelY = yStart; kernelY < yEnd; kernelY++){
-                        double weight = KERNEL_MATRIX[kernelX] [kernelY];
-                    
-                        bluePixel += inputIMG.at<Vec3b>(kernelX + i - KERNEL_OFFSET, kernelY + j- KERNEL_OFFSET)[0] * 
-                                    weight;
-                        
-                        greenPixel += inputIMG.at<Vec3b>(kernelX + i -  KERNEL_OFFSET, kernelY + j - KERNEL_OFFSET)[1] * 
-                                    weight;
-                        
-                        redPixel += inputIMG.at<Vec3b>(kernelX + i-KERNEL_OFFSET, kernelY + j - KERNEL_OFFSET)[2] * 
-                                    weight;
-          
-                    }
+                    redPixel += inputIMG.at<Vec3b>(kernelX + i, kernelY + j)[2] * 
+                                KERNEL_MATRIX[kernelX + 0] [kernelY + 0];
                 }
-            
-                          
-                outputIMG.at<Vec3b>(i, j)[0] = bluePixel;
-                outputIMG.at<Vec3b>(i, j)[1] = greenPixel;
-                outputIMG.at<Vec3b>(i, j)[2] = redPixel;
             }
-         
-        }
 
+            outputIMG.at<Vec3b>(i, j)[0] = bluePixel;
+            outputIMG.at<Vec3b>(i, j)[1] = greenPixel;
+            outputIMG.at<Vec3b>(i, j)[2] = redPixel;
+        }
+    }
 }
 
 int main( int argc, char** argv ) {
@@ -226,16 +186,32 @@ int main( int argc, char** argv ) {
 
     KERNEL_MATRIX = createKernelMatrix(KERNEL_SIZE);
 
+    pthread_t threads[NUM_THREADS];
+    int thread_error;
+
     //Starting the threads and setting work
     auto startClock = chrono::steady_clock::now();
 
-    makeBlurEffect(NUM_THREADS);
+    for(int i = 0; i < NUM_THREADS; i++){
+        thread_error = pthread_create(&threads[i], NULL, makeBlurEffect, (void*)i );
 
+        if(thread_error){
+            perror("Error: ");
+            exit(-1);
+        }
+    }
+
+    //Stop threads
+    for(int i = 0; i < NUM_THREADS; i++){
+        pthread_join(threads[i], NULL);
+    }
     //clock_t endClock = clock();
     auto endClock = chrono::steady_clock::now();
 
     auto finalClock = endClock - startClock;
-    cout << KERNEL_SIZE << "\t" << NUM_THREADS << "\t" << chrono::duration <double, milli> (finalClock).count() << " ms" <<"\n" <<endl;
+    
+    //cout<< KERNEL_SIZE << "," << NUM_THREADS << "," << chrono::duration <double, milli> (finalClock).count() << " ms"<<endl;
+    cout<< KERNEL_SIZE << "," << NUM_THREADS << "," << chrono::duration <double, milli> (finalClock).count()<<endl;
     imwrite(imageToSave, outputIMG);
 
     return 0;
