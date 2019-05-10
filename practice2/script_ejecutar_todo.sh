@@ -1,5 +1,5 @@
 #!/bin/bash
-g++ blur-effect.cpp -o y `pkg-config --cflags --libs opencv` -lpthread
+g++ blur-effect.cpp -o y `pkg-config --cflags --libs opencv` -fopenmp
 
 printf "\n --- HD blur processing --- \n"
 threads=1
