@@ -1,20 +1,3 @@
-/*
- * A simple libpng example program
- * http://zarb.org/~gc/html/libpng.html
- *
- * Modified by Yoshimasa Niwa to make it much simpler
- * and support all defined color_type.
- *
- * To build, use the next instruction on OS X.
- * $ brew install libpng
- * $ clang -lz -lpng15 libpng_test.c
- *
- * Copyright 2002-2010 Guillaume Cottenceau.
- *
- * This software may be freely redistributed under the terms
- * of the X11 license.
- * /usr/local/opt/llvm/bin/clang -lz -lpng16  gauss_omp.c -fopenmp -o gauss-omp
- */
 #include <cuda_runtime.h>
 #include <helper_cuda.h>
 #include <stdlib.h>
@@ -23,6 +6,7 @@
 #include "png.h"
 #include <sys/time.h>
 #include <malloc.h>
+#include <chrono>
 
 int width, height;
 unsigned char *d_R, *d_G, *d_B;
@@ -361,7 +345,8 @@ int main(int argc, char *argv[])
     printf("launched  threads per block%d\n",( threadsPerBlock));
     printf("operation per thread %d\n",opt);
 
-    
+    //starting the threads and setting work
+    auto startClock = chrono::steady_clock::now();
     //Se lanza el kernel
     //blurEffect(double **kernel, int height, int width,  char *d_R,  char *d_G,char *d_B, int radius, int kernelSize, int operationPerThread)
     blurEffect<<<blocksPerGrid,threadsPerBlock>>>(d_kernel, height, width, d_R, d_G, d_B, radio, tamanio, opt);
@@ -410,14 +395,11 @@ int main(int argc, char *argv[])
     cudaFree(h_R);
     cudaFree(h_G);
     cudaFree(h_B);
-    gettimeofday(&stop_time, NULL);
-    timersub(&stop_time, &start_time, &elapsed_time);
-    char tiempo[10];
-    sprintf(tiempo, "%f", elapsed_time.tv_sec + elapsed_time.tv_usec / 1000000.0);
+    //end clock timing
+    auto endClock = chrono::steady_clock::now();
+    auto finalClock = endClock - startClock;
+    cout<< tamanio << "," << threadsPerBlock << "," << chrono::duration <double, milli> (finalClock).count()<<endl;
     write_png_file(argv[2]);
-    char text_otuput[100];
-    sprintf(text_otuput, "fopenMP\tHilos : %d\t Tamaño del Kernel %s\t Tamaño de la imagen %dpx\t Tiempo %s", threadsPerBlock, argv[3], width, tiempo);
-    write_output(text_otuput);
-
+    
     return 0;
 }
