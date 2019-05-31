@@ -262,8 +262,7 @@ int main(int argc, char *argv[])
     char radio = (char)floor(tamanio / 2);
     read_png_file(argv[1]);
     int opt = (int)(ceil(height * width/ (threadsPerBlock*blocksPerGrid)));
-    struct timeval start_time, stop_time, elapsed_time;
-    gettimeofday(&start_time, NULL);
+    
     size_t size = height * width*sizeof(unsigned char);
     // Asignar memoria para cpu
     h_R = (unsigned char *)malloc( size );
