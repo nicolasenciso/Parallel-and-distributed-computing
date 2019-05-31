@@ -167,7 +167,14 @@ void write_png_file(char *filename)
     fclose(fp);
 }
 
-double **createKernel(int tamanio)
+//Gaussian function to get the value for the i,j position on the kernel matrix
+// stdDev is the standard deviation of the gaussian function ( sigma )
+//https://es.wikipedia.org/wiki/Funci%C3%B3n_gaussiana
+double gaussianFunction(double x, double y, double stdDev){ 
+    return exp( -(((x-y)*((x-y)))/(2.0*stdDev*stdDev)));
+}
+
+/*double **createKernel(int tamanio)
 {
     double **matriz = (double **)malloc(tamanio * sizeof(double *));
     for (int i = 0; i < tamanio; i++)
@@ -184,6 +191,50 @@ double **createKernel(int tamanio)
         }
     }
     return matriz;
+}*/
+
+//Function to create the kernel matrix which will be use to make the blur effect.
+//It uses the gaussian value weighted, it means, multiplied the blur in horizontal
+//  with the blur on vertical, and later divide the value in the average of
+//  all the matrix values;
+double **createKernel(int tamanio){
+    int KERNEL_SIZE = tamanio;
+    if(KERNEL_SIZE%2 == 0){
+        KERNEL_SIZE += 1; // to make sure of kernel with odd size
+    }
+
+    double radioEffect = (KERNEL_SIZE - 1) / 2; //radioEffect is a metric to know the scope of the effect
+    double stdDev = radioEffect / 2.;
+    double average = 0;
+    double **kernelMatrix = new double *[KERNEL_SIZE]; //Due to c++ is unable to return a matrix
+                                                       //it has to be a pointer to an array
+    
+    for(int i = 0; i < KERNEL_SIZE; i++){
+        kernelMatrix[i] = new double [KERNEL_SIZE];
+
+        for(int j = 0; j < KERNEL_SIZE; j++){ // Multiplied horizontal and vertical blur values
+
+            double blurHorizontal = gaussianFunction(i, radioEffect, stdDev);
+            double blurVertical = gaussianFunction(j, radioEffect, stdDev);
+
+            kernelMatrix[i][j] = blurHorizontal * blurVertical;
+            average += kernelMatrix[i][j];
+        }
+    }
+
+    for(int i = 0; i < KERNEL_SIZE; i++){
+        for(int j = 0; j < KERNEL_SIZE; j++){
+            kernelMatrix[i][j] /= average; // divide each value over the average
+        }
+    }
+    
+    /*for(int i = 0; i < KERNEL_SIZE; i++){ //print the kernel matrix
+        for(int j = 0; j < KERNEL_SIZE; j++){
+            cout<<kernelMatrix[i][j]<<" | ";
+        }
+        cout << "\n";
+    }*/
+    return kernelMatrix;
 }
 
 double *matrix_to_arr(double **M, int rows, int cols){
