@@ -166,20 +166,6 @@ void write_png_file(char *filename)
 
     fclose(fp);
 }
-void write_output(char *text)
-{
-    FILE *file;
-
-    file = fopen("gauss_blur.txt", "a");
-    if (file == NULL)
-    {
-        /* File not created hence exit */
-        printf("Unable to create file.\n");
-        exit(EXIT_FAILURE);
-    }
-    fprintf(file, "%s\n", text);
-    fclose(file);
-}
 
 double **createKernel(int tamanio)
 {
@@ -343,9 +329,6 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Failed to copy vector kernel from host to device (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
-    printf("max threads per block%d\n",deviceProp.maxThreadsPerMultiProcessor);
-    printf("launched  threads per block%d\n",( threadsPerBlock));
-    printf("operation per thread %d\n",opt);
 
     //starting the threads and setting work
     auto startClock = chrono::steady_clock::now();
@@ -362,7 +345,6 @@ int main(int argc, char *argv[])
 
     // Copy the device result vector in device memory to the host result vector
     // in host memory.
-    printf("Copy output data from the CUDA device to the host memory\n");
     err = cudaMemcpy(h_R, d_R, size, cudaMemcpyDeviceToHost);
     if (err != cudaSuccess)
     {    
