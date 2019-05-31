@@ -2,11 +2,14 @@
 #include <helper_cuda.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <iostream>
 #include "math.h"
 #include "png.h"
 #include <sys/time.h>
 #include <malloc.h>
 #include <chrono>
+
+using namespace std;
 
 int width, height;
 unsigned char *d_R, *d_G, *d_B;
