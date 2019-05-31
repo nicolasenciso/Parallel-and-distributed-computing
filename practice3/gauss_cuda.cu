@@ -8,6 +8,7 @@
 #include <sys/time.h>
 #include <malloc.h>
 #include <chrono>
+#include <cmath>
 
 using namespace std;
 
