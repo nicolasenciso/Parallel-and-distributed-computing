@@ -259,9 +259,9 @@ int main(int argc, char *argv[]){
     
     cudaError_t err = cudaSuccess;
 
-//To get the number of core(threads) on each block, and the number of blocks per grid
-//this numbers depends on the GPU, to run this part, it is necessary to call the flag:
-//-I /usr/local/cuda/samples/common/inc/   which comes from CUDA libraries
+    //To get the number of core(threads) on each block, and the number of blocks per grid
+    //this numbers depends on the GPU, to run this part, it is necessary to call the flag:
+    //-I /usr/local/cuda/samples/common/inc/   which comes from CUDA libraries
 
     int dev = 0;
     cudaSetDevice(dev);
@@ -286,14 +286,12 @@ int main(int argc, char *argv[]){
   
     
     
-    if (h_Red == NULL || h_Blue == NULL || h_Green == NULL)
-    {
-        fprintf(stderr, "Failed to allocate host vectors!\n");
+    if (h_Red == NULL || h_Blue == NULL || h_Green == NULL){
+        fprintf(stderr, "Failed to allocate host variables\n");
         exit(EXIT_FAILURE);
     }
     getChannels();
     
- 
     double *h_kernel;
     double *d_kernel;
     h_kernel = matrixToArray(createKernel(KERNEL_SIZE), KERNEL_SIZE, KERNEL_SIZE);
@@ -301,19 +299,19 @@ int main(int argc, char *argv[]){
     //Memory allocation on device
     err = cudaMalloc((void **)&d_Red, size);
     if (err != cudaSuccess){
-        fprintf(stderr, "Failed to allocate device vector R (error code %s)!\n", cudaGetErrorString(err));
+        fprintf(stderr, "Failed to allocate device variable d_Red (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
 
     err = cudaMalloc((void **)&d_Green, size);
     if (err != cudaSuccess){
-        fprintf(stderr, "Failed to allocate device vector G (error code %s)!\n", cudaGetErrorString(err));
+        fprintf(stderr, "Failed to allocate device variable d_Green (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
 
     err = cudaMalloc((void **)&d_Blue, size);
     if (err != cudaSuccess){
-        fprintf(stderr, "Failed to allocate device vector B (error code %s)!\n", cudaGetErrorString(err));
+        fprintf(stderr, "Failed to allocate device variable d_Blue (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
 
@@ -326,19 +324,19 @@ int main(int argc, char *argv[]){
     //Copy memory from host to device
     err = cudaMemcpy(d_Red, h_Red, size, cudaMemcpyHostToDevice);
     if (err != cudaSuccess){
-        fprintf(stderr, "Failed to copy vector R from host to device (error code %s)!\n", cudaGetErrorString(err));
+        fprintf(stderr, "Failed to copy variable d_Red from host to device (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
 
     err = cudaMemcpy(d_Green, h_Green, size, cudaMemcpyHostToDevice);
     if (err != cudaSuccess){
-        fprintf(stderr, "Failed to copy vector G from host to device (error code %s)!\n", cudaGetErrorString(err));
+        fprintf(stderr, "Failed to copy variable d_Green from host to device (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
 
     err = cudaMemcpy(d_Blue, h_Blue, size, cudaMemcpyHostToDevice);
     if (err != cudaSuccess){
-        fprintf(stderr, "Failed to copy vector B from host to device (error code %s)!\n", cudaGetErrorString(err));
+        fprintf(stderr, "Failed to copy variable d_Blue from host to device (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
     
@@ -350,30 +348,31 @@ int main(int argc, char *argv[]){
 
     //starting the threads and setting work
     auto startClock = chrono::steady_clock::now();
+    
     //starting kernel on GPU
     blurEffect<<<blocksPerGrid,threadsPerBlock>>>(d_kernel, height, width, d_Red, d_Green, d_Blue, radio, KERNEL_SIZE, opt);
     err = cudaGetLastError();
     if (err != cudaSuccess){
-        fprintf(stderr, "Failed to launch vectorAdd kernel (error code %s)!\n", cudaGetErrorString(err));
+        fprintf(stderr, "Failed to launch Blur effect Kernel (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
 
     // Copy results vector from device to host
     err = cudaMemcpy(h_Red, d_Red, size, cudaMemcpyDeviceToHost);
     if (err != cudaSuccess){    
-        fprintf(stderr, "Failed to copy vector R from device to host (error code %s)!\n", cudaGetErrorString(err));
+        fprintf(stderr, "Failed to copy variable Red from device to host (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
 
     err = cudaMemcpy(h_Green, d_Green, size, cudaMemcpyDeviceToHost);
     if (err != cudaSuccess){    
-        fprintf(stderr, "Failed to copy vector G from device to host (error code %s)!\n", cudaGetErrorString(err));
+        fprintf(stderr, "Failed to copy variable Green from device to host (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
 
     err = cudaMemcpy(h_Blue, d_Blue, size, cudaMemcpyDeviceToHost);
     if (err != cudaSuccess){    
-        fprintf(stderr, "Failed to copy vector B from device to host (error code %s)!\n", cudaGetErrorString(err));
+        fprintf(stderr, "Failed to copy variable Blue from device to host (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
     cudaFree(d_Red);
