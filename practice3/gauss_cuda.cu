@@ -40,7 +40,7 @@ unsigned char *h_Red, *h_Green, *h_Blue;
             double redTemp = 0;
             double blueTemp = 0;
             double greenTemp = 0;
-            double acum = 0;
+            double average = 0;
 
             for (int k = 0; k < kernelSize; k++ ){
 
@@ -51,13 +51,13 @@ unsigned char *h_Red, *h_Green, *h_Blue;
                     redTemp += d_Red[y*width + x] * d_kernel[k*kernelSize + l];
                     greenTemp += d_Green[y*width + x] * d_kernel[k*kernelSize + l];
                     blueTemp += d_Blue[y*width + x] * d_kernel[k*kernelSize + l];
-                    acum += d_kernel[k*kernelSize + l];    
+                    average += d_kernel[k*kernelSize + l];    
                 }
             }
 
-            d_Red[i*width + j] = redTemp/acum;
-            d_Green[i*width + j] = greenTemp/acum;
-            d_Blue[i*width + j] = blueTemp/acum;
+            d_Red[i*width + j] = redTemp/average;
+            d_Green[i*width + j] = greenTemp/average;
+            d_Blue[i*width + j] = blueTemp/average;
         }
     }
 }
