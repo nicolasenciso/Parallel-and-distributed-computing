@@ -275,8 +275,8 @@ int main(int argc, char *argv[]){
     int blocksPerGrid =   deviceProp.multiProcessorCount;
     
 
-    int KERNEL_SIZE = 0;
-    KERNEL_SIZE = atoi(argv[3]);
+
+    int KERNEL_SIZE = atoi(argv[3]);
     char radio = (char)floor(KERNEL_SIZE / 2);
     read_png_file(argv[1]);
     int opt = (int)(ceil(height * width/ (threadsPerBlock*blocksPerGrid)));
