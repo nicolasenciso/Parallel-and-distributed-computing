@@ -258,14 +258,14 @@ void makeRowPointer(){
         }
     }
 }
-int main(int argc, char *argv[])
-{
-
-    if (argc != 4)
-        abort();  
+int main(int argc, char *argv[]){
     cudaError_t err = cudaSuccess;
-// declarar  la cantidad de hilos segun la gpu
-//-------------------------------------------------
+
+
+//To get the number of core(threads) on each block, and the number of blocks per grid
+//this numbers depends on the GPU, to run this part, it is necessary to call the flag:
+//-I /usr/local/cuda/samples/common/inc/   which comes from CUDA libraries
+
     int dev = 0;
     cudaSetDevice(dev);
     cudaDeviceProp deviceProp;
