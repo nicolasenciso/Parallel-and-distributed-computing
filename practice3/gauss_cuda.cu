@@ -27,7 +27,8 @@ unsigned char *d_Red, *d_Green, *d_Blue;
 unsigned char *h_Red, *h_Green, *h_Blue;
 
 //Kernel function for device run
- __global__ void blurEffect(double *d_kernel, int height, int width,  unsigned char *d_Red,  unsigned char *d_Green,unsigned char *d_Blue, int offset, int kernelSize, int operationPerThread){
+ __global__ void 
+ blurEffect(double *d_kernel, int height, int width,  unsigned char *d_Red,  unsigned char *d_Green,unsigned char *d_Blue, int offset, int kernelSize, int operationPerThread){
     
     int index = ((blockDim.x * blockIdx.x + threadIdx.x));
     if( index < (height*width) ){
@@ -57,7 +58,6 @@ unsigned char *h_Red, *h_Green, *h_Blue;
                     average += d_kernel[kernelMatrixIndex];    
                 }
             }
-
             d_Red[i*width + j] = redTemp/average;
             d_Green[i*width + j] = greenTemp/average;
             d_Blue[i*width + j] = blueTemp/average;
