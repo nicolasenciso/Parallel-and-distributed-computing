@@ -95,7 +95,7 @@ void read_png_file(char *filename){
 
     // PNG_COLOR_TYPE_GRAY_ALPHA is always 8 or 16bit depth.
     if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
-        png_set_expand_Greenray_1_2_4_to_8(png);
+        png_set_expand_gray_1_2_4_to_8(png);
 
     if (png_get_valid(png, info, PNG_INFO_tRNS))
         png_set_tRNS_to_alpha(png);
