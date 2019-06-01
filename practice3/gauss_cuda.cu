@@ -183,8 +183,8 @@ double **createKernel(int KERNEL_SIZE){
         KERNEL_SIZE += 1; // to make sure of kernel with odd size
     }
 
-    double radioEffect = (KERNEL_SIZE - 1) / 2; //radioEffect is a metric to know the scope of the effect
-    double stdDev = radioEffect / 2.;
+    double matrixOffsetEffect = (KERNEL_SIZE - 1) / 2; //matrixOffsetEffect is a metric to know the scope of the effect
+    double stdDev = matrixOffsetEffect / 2.;
     double average = 0;
     double **kernelMatrix = new double *[KERNEL_SIZE]; //Due to c++ is unable to return a matrix
                                                        //it has to be a pointer to an array
@@ -194,8 +194,8 @@ double **createKernel(int KERNEL_SIZE){
 
         for(int j = 0; j < KERNEL_SIZE; j++){ // Multiplied horizontal and vertical blur values
 
-            double blurHorizontal = gaussianFunction(i, radioEffect, stdDev);
-            double blurVertical = gaussianFunction(j, radioEffect, stdDev);
+            double blurHorizontal = gaussianFunction(i, matrixOffsetEffect, stdDev);
+            double blurVertical = gaussianFunction(j, matrixOffsetEffect, stdDev);
 
             kernelMatrix[i][j] = blurHorizontal * blurVertical;
             average += kernelMatrix[i][j];
@@ -274,7 +274,7 @@ int main(int argc, char *argv[]){
 
 
     int KERNEL_SIZE = atoi(argv[3]);
-    char radio = (char)floor(KERNEL_SIZE / 2);
+    char matrixOffset = (char)floor(KERNEL_SIZE / 2);
     read_png_file(argv[1]);
     int opt = (int)(ceil(height * width/ (threadsPerBlock*blocksPerGrid)));
     
@@ -348,9 +348,9 @@ int main(int argc, char *argv[]){
 
     //starting the threads and setting work
     auto startClock = chrono::steady_clock::now();
-    
+
     //starting kernel on GPU
-    blurEffect<<<blocksPerGrid,threadsPerBlock>>>(d_kernel, height, width, d_Red, d_Green, d_Blue, radio, KERNEL_SIZE, opt);
+    blurEffect<<<blocksPerGrid,threadsPerBlock>>>(d_kernel, height, width, d_Red, d_Green, d_Blue, matrixOffset, KERNEL_SIZE, opt);
     err = cudaGetLastError();
     if (err != cudaSuccess){
         fprintf(stderr, "Failed to launch Blur effect Kernel (error code %s)!\n", cudaGetErrorString(err));
