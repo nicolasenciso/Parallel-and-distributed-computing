@@ -217,7 +217,7 @@ double **createKernel(int KERNEL_SIZE){
     return kernelMatrix;
 }
 
-double *matrix_to_arr(double **M, int rows, int cols){
+double *matrixToArray(double **M, int rows, int cols){
     double *arr = (double *)malloc(rows * cols * sizeof(double));
     int k = 0;
     for(int i = 0; i < rows; i++){
@@ -296,7 +296,7 @@ int main(int argc, char *argv[]){
  
     double *h_kernel;
     double *d_kernel;
-    h_kernel = matrix_to_arr(createKernel(KERNEL_SIZE), KERNEL_SIZE, KERNEL_SIZE);
+    h_kernel = matrixToArray(createKernel(KERNEL_SIZE), KERNEL_SIZE, KERNEL_SIZE);
     
     //Memory allocation on device
     err = cudaMalloc((void **)&d_Red, size);
