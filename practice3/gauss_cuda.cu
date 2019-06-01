@@ -26,10 +26,7 @@ size_t size;
 unsigned char *d_Red, *d_Green, *d_Blue;
 unsigned char *h_Red, *h_Green, *h_Blue;
 
- __global__ void
-blurEffect(double *d_kernel, int height, int width,  unsigned char *d_Red,  unsigned char *d_Green,unsigned char *d_Blue, int radius, int kernelSize, int operationPerThread)
-{
-    
+ __global__ void blurEffect(double *d_kernel, int height, int width,  unsigned char *d_Red,  unsigned char *d_Green,unsigned char *d_Blue, int radius, int kernelSize, int operationPerThread){
     int index = ((blockDim.x * blockIdx.x + threadIdx.x));
     if( index < (height*width) )
     {
