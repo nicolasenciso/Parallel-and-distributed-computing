@@ -49,11 +49,12 @@ unsigned char *h_Red, *h_Green, *h_Blue;
 
                     int x = (j - offset + l + width )% width;
                     int colorIndex = (y*width) + x;
+                    int kernelMatrixIndex = (k * kernelSize) + l;
 
-                    redTemp += d_Red[colorIndex] * d_kernel[k*kernelSize + l];
-                    greenTemp += d_Green[colorIndex] * d_kernel[k*kernelSize + l];
-                    blueTemp += d_Blue[colorIndex] * d_kernel[k*kernelSize + l];
-                    average += d_kernel[k*kernelSize + l];    
+                    redTemp += d_Red[colorIndex] * d_kernel[kernelMatrixIndex];
+                    greenTemp += d_Green[colorIndex] * d_kernel[kernelMatrixIndex];
+                    blueTemp += d_Blue[colorIndex] * d_kernel[kernelMatrixIndex];
+                    average += d_kernel[kernelMatrixIndex];    
                 }
             }
 
