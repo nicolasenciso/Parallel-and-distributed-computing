@@ -13,15 +13,15 @@
 using namespace std;
 
 int width, height;
-unsigned char *d_Red, *d_G, *d_B;
-unsigned char *h_R, *h_G, *h_B;
+unsigned char *d_Red, *d_Green, *d_Blue;
+unsigned char *h_Red, *h_Green, *h_Blue;
 png_byte color_type;
 png_byte bit_depth;
 png_bytep *row_pointers;
 size_t size;
 
  __global__ void
-blurEffect(double *d_kernel, int height, int width,  unsigned char *d_Red,  unsigned char *d_G,unsigned char *d_B, int radius, int kernelSize, int operationPerThread)
+blurEffect(double *d_kernel, int height, int width,  unsigned char *d_Red,  unsigned char *d_Green,unsigned char *d_Blue, int radius, int kernelSize, int operationPerThread)
 {
     
     int index = ((blockDim.x * blockIdx.x + threadIdx.x));
@@ -41,16 +41,16 @@ blurEffect(double *d_kernel, int height, int width,  unsigned char *d_Red,  unsi
                 {
                     int x = (j - radius + l + width )% width;
                     redTemp += d_Red[y*width + x] * d_kernel[k*kernelSize + l];
-                    greenTemp += d_G[y*width + x] * d_kernel[k*kernelSize + l];
-                    blueTemp += d_B[y*width + x] * d_kernel[k*kernelSize + l];
+                    greenTemp += d_Green[y*width + x] * d_kernel[k*kernelSize + l];
+                    blueTemp += d_Blue[y*width + x] * d_kernel[k*kernelSize + l];
                     acum += d_kernel[k*kernelSize + l];
                     
                 }
             }
 
             d_Red[i*width + j] = redTemp/acum;
-            d_G[i*width + j] = greenTemp/acum;
-            d_B[i*width + j] = blueTemp/acum;
+            d_Green[i*width + j] = greenTemp/acum;
+            d_Blue[i*width + j] = blueTemp/acum;
         }
     }
 }
@@ -89,7 +89,7 @@ void read_png_file(char *filename){
 
     // PNG_COLOR_TYPE_GRAY_ALPHA is always 8 or 16bit depth.
     if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
-        png_set_expand_gray_1_2_4_to_8(png);
+        png_set_expand_Greenray_1_2_4_to_8(png);
 
     if (png_get_valid(png, info, PNG_INFO_tRNS))
         png_set_tRNS_to_alpha(png);
@@ -232,9 +232,9 @@ void getChannels(){
         for (int j = 0; j < width; j++)
         {
             png_bytep px = &(row[j * 4]);
-            h_R[i * width + j] = (char)px[0];
-            h_G[i * width + j] = (char)px[1];
-            h_B[i * width + j] = (char)px[2];
+            h_Red[i * width + j] = (char)px[0];
+            h_Green[i * width + j] = (char)px[1];
+            h_Blue[i * width + j] = (char)px[2];
         }
     }
 }
@@ -246,9 +246,9 @@ void makeRowPointer(){
         for (int j = 0; j < width; j++)
         {
             png_bytep px = &(row[j * 4]);
-            px[0] = h_R[i * width + j];
-            px[1] = h_G[i * width + j];
-            px[2] = h_B[i * width + j];
+            px[0] = h_Red[i * width + j];
+            px[1] = h_Green[i * width + j];
+            px[2] = h_Blue[i * width + j];
         }
     }
 }
@@ -276,13 +276,13 @@ int main(int argc, char *argv[])
     
     size_t size = height * width*sizeof(unsigned char);
     // Asignar memoria para cpu
-    h_R = (unsigned char *)malloc( size );
-    h_B = (unsigned char *)malloc(  size );
-    h_G = (unsigned char *)malloc( size );
+    h_Red = (unsigned char *)malloc( size );
+    h_Blue = (unsigned char *)malloc(  size );
+    h_Green = (unsigned char *)malloc( size );
   
     
     
-    if (h_R == NULL || h_B == NULL || h_G == NULL)
+    if (h_Red == NULL || h_Blue == NULL || h_Green == NULL)
     {
         fprintf(stderr, "Failed to allocate host vectors!\n");
         exit(EXIT_FAILURE);
@@ -305,14 +305,14 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    err = cudaMalloc((void **)&d_G, size);
+    err = cudaMalloc((void **)&d_Green, size);
     if (err != cudaSuccess)
     {
         fprintf(stderr, "Failed to allocate device vector G (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
 
-    err = cudaMalloc((void **)&d_B, size);
+    err = cudaMalloc((void **)&d_Blue, size);
     if (err != cudaSuccess)
     {
         fprintf(stderr, "Failed to allocate device vector B (error code %s)!\n", cudaGetErrorString(err));
@@ -327,21 +327,21 @@ int main(int argc, char *argv[])
     }
 
     //Copiar memoria de host a device
-    err = cudaMemcpy(d_Red, h_R, size, cudaMemcpyHostToDevice);
+    err = cudaMemcpy(d_Red, h_Red, size, cudaMemcpyHostToDevice);
     if (err != cudaSuccess)
     {
         fprintf(stderr, "Failed to copy vector R from host to device (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
 
-    err = cudaMemcpy(d_G, h_G, size, cudaMemcpyHostToDevice);
+    err = cudaMemcpy(d_Green, h_Green, size, cudaMemcpyHostToDevice);
     if (err != cudaSuccess)
     {
         fprintf(stderr, "Failed to copy vector G from host to device (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
 
-    err = cudaMemcpy(d_B, h_B, size, cudaMemcpyHostToDevice);
+    err = cudaMemcpy(d_Blue, h_Blue, size, cudaMemcpyHostToDevice);
     if (err != cudaSuccess)
     {
         fprintf(stderr, "Failed to copy vector B from host to device (error code %s)!\n", cudaGetErrorString(err));
@@ -358,7 +358,7 @@ int main(int argc, char *argv[])
     //starting the threads and setting work
     auto startClock = chrono::steady_clock::now();
     //starting kernel on GPU
-    blurEffect<<<blocksPerGrid,threadsPerBlock>>>(d_kernel, height, width, d_Red, d_G, d_B, radio, tamanio, opt);
+    blurEffect<<<blocksPerGrid,threadsPerBlock>>>(d_kernel, height, width, d_Red, d_Green, d_Blue, radio, tamanio, opt);
     err = cudaGetLastError();
     if (err != cudaSuccess)
     {
@@ -369,7 +369,7 @@ int main(int argc, char *argv[])
 
     // Copy the device result vector in device memory to the host result vector
     // in host memory.
-    err = cudaMemcpy(h_R, d_Red, size, cudaMemcpyDeviceToHost);
+    err = cudaMemcpy(h_Red, d_Red, size, cudaMemcpyDeviceToHost);
     if (err != cudaSuccess)
     {    
         fprintf(stderr, "Failed to copy vector R from device to host (error code %s)!\n", cudaGetErrorString(err));
@@ -377,7 +377,7 @@ int main(int argc, char *argv[])
     }
 
     
-    err = cudaMemcpy(h_G, d_G, size, cudaMemcpyDeviceToHost);
+    err = cudaMemcpy(h_Green, d_Green, size, cudaMemcpyDeviceToHost);
     if (err != cudaSuccess)
     {    
         fprintf(stderr, "Failed to copy vector G from device to host (error code %s)!\n", cudaGetErrorString(err));
@@ -385,24 +385,24 @@ int main(int argc, char *argv[])
     }
 
     
-    err = cudaMemcpy(h_B, d_B, size, cudaMemcpyDeviceToHost);
+    err = cudaMemcpy(h_Blue, d_Blue, size, cudaMemcpyDeviceToHost);
     if (err != cudaSuccess)
     {    
         fprintf(stderr, "Failed to copy vector B from device to host (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
     cudaFree(d_Red);
-    cudaFree(d_G);
-    cudaFree(d_B);
+    cudaFree(d_Green);
+    cudaFree(d_Blue);
     cudaFree(d_kernel);
 
 
   
     free(h_kernel);
     makeRowPointer();
-    cudaFree(h_R);
-    cudaFree(h_G);
-    cudaFree(h_B);
+    cudaFree(h_Red);
+    cudaFree(h_Green);
+    cudaFree(h_Blue);
     //end clock timing
     auto endClock = chrono::steady_clock::now();
     auto finalClock = endClock - startClock;
