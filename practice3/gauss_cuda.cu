@@ -275,8 +275,8 @@ int main(int argc, char *argv[]){
     int blocksPerGrid =   deviceProp.multiProcessorCount;
     
 
-
-    int KERNEL_SIZE = atoi(argv[3]);
+    int KERNEL_SIZE = 0;
+    KERNEL_SIZE = atoi(argv[3]);
     char radio = (char)floor(KERNEL_SIZE / 2);
     read_png_file(argv[1]);
     int opt = (int)(ceil(height * width/ (threadsPerBlock*blocksPerGrid)));
@@ -297,8 +297,6 @@ int main(int argc, char *argv[]){
     getChannels();
     
  
-  
-    
     double *h_kernel;
     double *d_kernel;
     h_kernel = matrix_to_arr(createKernel(KERNEL_SIZE), KERNEL_SIZE, KERNEL_SIZE);
@@ -403,13 +401,12 @@ int main(int argc, char *argv[]){
     cudaFree(d_Blue);
     cudaFree(d_kernel);
 
-
-  
     free(h_kernel);
     makeRowPointer();
     cudaFree(h_Red);
     cudaFree(h_Green);
     cudaFree(h_Blue);
+    
     //end clock timing
     auto endClock = chrono::steady_clock::now();
     auto finalClock = endClock - startClock;
