@@ -218,15 +218,14 @@ double **createKernel(int KERNEL_SIZE){
 }
 
 double *matrixToArray(double **matrix, int rows, int cols){
-    double *arr = (double *)malloc(rows * cols * sizeof(double));
+    double *array = (double *)malloc(rows * cols * sizeof(double));
     int k = 0;
     for(int i = 0; i < rows; i++){
         for(int j = 0; j < cols; j++){
-            arr[k++] = matrix[i][j];
+            array[k++] = matrix[i][j];
         }
     }
-
-    return arr;
+    return array;
 }
 void getChannels(){
     for (int i = 0; i < height; i++)
