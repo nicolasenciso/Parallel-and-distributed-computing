@@ -26,7 +26,9 @@ size_t size;
 unsigned char *d_Red, *d_Green, *d_Blue;
 unsigned char *h_Red, *h_Green, *h_Blue;
 
+//Kernel function for device run
  __global__ void blurEffect(double *d_kernel, int height, int width,  unsigned char *d_Red,  unsigned char *d_Green,unsigned char *d_Blue, int radius, int kernelSize, int operationPerThread){
+    
     int index = ((blockDim.x * blockIdx.x + threadIdx.x));
     if( index < (height*width) )
     {
@@ -271,14 +273,15 @@ int main(int argc, char *argv[]){
     int blocksPerGrid =   deviceProp.multiProcessorCount;
     
 
-
+    //Creating kernel matrix
     int KERNEL_SIZE = atoi(argv[3]);
     char matrixOffset = (char)floor(KERNEL_SIZE / 2);
     read_png_file(argv[1]);
     int opt = (int)(ceil(height * width/ (threadsPerBlock*blocksPerGrid)));
     
     size_t size = height * width*sizeof(unsigned char);
-    // Asignar memoria para cpu
+    
+    // Allocate memory for host
     h_Red = (unsigned char *)malloc( size );
     h_Blue = (unsigned char *)malloc(  size );
     h_Green = (unsigned char *)malloc( size );
