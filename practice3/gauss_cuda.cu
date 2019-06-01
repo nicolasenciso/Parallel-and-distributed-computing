@@ -10,15 +10,20 @@
 #include <chrono>
 #include <cmath>
 
+//./gauss_cuda hdLancia.png blur/hdLanciaBlur.png 15 | tee -a times/hd-times.txt
+
 using namespace std;
 
 int width, height;
-unsigned char *d_Red, *d_Green, *d_Blue;
-unsigned char *h_Red, *h_Green, *h_Blue;
+
 png_byte color_type;
 png_byte bit_depth;
 png_bytep *row_pointers;
+
 size_t size;
+
+unsigned char *d_Red, *d_Green, *d_Blue;
+unsigned char *h_Red, *h_Green, *h_Blue;
 
  __global__ void
 blurEffect(double *d_kernel, int height, int width,  unsigned char *d_Red,  unsigned char *d_Green,unsigned char *d_Blue, int radius, int kernelSize, int operationPerThread)
@@ -30,6 +35,7 @@ blurEffect(double *d_kernel, int height, int width,  unsigned char *d_Red,  unsi
         for(int count = 0; count < operationPerThread; count ++){
             int i = (index*operationPerThread + count) / width;// fila del pixel al que se le hara gauss
             int j = (index*operationPerThread + count) % width;//columna del pixel al que se le hara gauss
+
             double redTemp = 0;
             double blueTemp = 0;
             double greenTemp = 0;
@@ -175,7 +181,6 @@ double gaussianFunction(double x, double y, double stdDev){
 //  with the blur on vertical, and later divide the value in the average of
 //  all the matrix values;
 double **createKernel(int tamanio){
-    int KERNEL_SIZE = tamanio;
     if(KERNEL_SIZE%2 == 0){
         KERNEL_SIZE += 1; // to make sure of kernel with odd size
     }
