@@ -180,8 +180,8 @@ double gaussianFunction(double x, double y, double stdDev){
 //It uses the gaussian value weighted, it means, multiplied the blur in horizontal
 //  with the blur on vertical, and later divide the value in the average of
 //  all the matrix values;
-double **createKernel(int tamanio){
-    int KERNEL_SIZE = tamanio;
+double **createKernel(int KERNEL_SIZE){
+    int KERNEL_SIZE = KERNEL_SIZE;
     if(KERNEL_SIZE%2 == 0){
         KERNEL_SIZE += 1; // to make sure of kernel with odd size
     }
@@ -259,8 +259,8 @@ void makeRowPointer(){
     }
 }
 int main(int argc, char *argv[]){
+    
     cudaError_t err = cudaSuccess;
-
 
 //To get the number of core(threads) on each block, and the number of blocks per grid
 //this numbers depends on the GPU, to run this part, it is necessary to call the flag:
@@ -274,9 +274,10 @@ int main(int argc, char *argv[]){
 	threadsPerBlock = threadsPerBlock*2;
     int blocksPerGrid =   deviceProp.multiProcessorCount;
     
-//-------------------------------------------------
-    int tamanio = atoi(argv[3]);
-    char radio = (char)floor(tamanio / 2);
+
+
+    int KERNEL_SIZE = atoi(argv[3]);
+    char radio = (char)floor(KERNEL_SIZE / 2);
     read_png_file(argv[1]);
     int opt = (int)(ceil(height * width/ (threadsPerBlock*blocksPerGrid)));
     
@@ -300,7 +301,7 @@ int main(int argc, char *argv[]){
     
     double *h_kernel;
     double *d_kernel;
-    h_kernel = matrix_to_arr(createKernel(tamanio), tamanio, tamanio);
+    h_kernel = matrix_to_arr(createKernel(KERNEL_SIZE), KERNEL_SIZE, KERNEL_SIZE);
     
     //Asignacion de memoria para cuda
     
@@ -325,7 +326,7 @@ int main(int argc, char *argv[]){
         exit(EXIT_FAILURE);
     }
 
-    err = cudaMalloc((void**)&d_kernel, tamanio*tamanio*sizeof(double));
+    err = cudaMalloc((void**)&d_kernel, KERNEL_SIZE*KERNEL_SIZE*sizeof(double));
     if (err != cudaSuccess)
     {
         fprintf(stderr, "Failed to allocate device matrix kernel (error code %s)!\n", cudaGetErrorString(err));
@@ -354,7 +355,7 @@ int main(int argc, char *argv[]){
         exit(EXIT_FAILURE);
     }
     
-    err = cudaMemcpy(d_kernel, h_kernel, tamanio*tamanio*sizeof(double), cudaMemcpyHostToDevice);
+    err = cudaMemcpy(d_kernel, h_kernel, KERNEL_SIZE*KERNEL_SIZE*sizeof(double), cudaMemcpyHostToDevice);
     if (err != cudaSuccess)
     {
         fprintf(stderr, "Failed to copy vector kernel from host to device (error code %s)!\n", cudaGetErrorString(err));
@@ -364,7 +365,7 @@ int main(int argc, char *argv[]){
     //starting the threads and setting work
     auto startClock = chrono::steady_clock::now();
     //starting kernel on GPU
-    blurEffect<<<blocksPerGrid,threadsPerBlock>>>(d_kernel, height, width, d_Red, d_Green, d_Blue, radio, tamanio, opt);
+    blurEffect<<<blocksPerGrid,threadsPerBlock>>>(d_kernel, height, width, d_Red, d_Green, d_Blue, radio, KERNEL_SIZE, opt);
     err = cudaGetLastError();
     if (err != cudaSuccess)
     {
@@ -412,7 +413,7 @@ int main(int argc, char *argv[]){
     //end clock timing
     auto endClock = chrono::steady_clock::now();
     auto finalClock = endClock - startClock;
-    cout<< tamanio << "," << threadsPerBlock << "," << chrono::duration <double, milli> (finalClock).count()<<endl;
+    cout<< KERNEL_SIZE << "," << threadsPerBlock << "," << chrono::duration <double, milli> (finalClock).count()<<endl;
     write_png_file(argv[2]);
     
     return 0;
