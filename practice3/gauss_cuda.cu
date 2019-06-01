@@ -180,7 +180,7 @@ double gaussianFunction(double x, double y, double stdDev){
 //It uses the gaussian value weighted, it means, multiplied the blur in horizontal
 //  with the blur on vertical, and later divide the value in the average of
 //  all the matrix values;
-double **createKernel(int tamanio){
+double **createKernel(int KERNEL_SIZE){
     if(KERNEL_SIZE%2 == 0){
         KERNEL_SIZE += 1; // to make sure of kernel with odd size
     }
