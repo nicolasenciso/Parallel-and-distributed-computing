@@ -13,14 +13,15 @@
 using namespace std;
 
 int width, height;
-unsigned char *d_R, *d_G, *d_B;
+unsigned char *d_Red, *d_G, *d_B;
 unsigned char *h_R, *h_G, *h_B;
 png_byte color_type;
 png_byte bit_depth;
 png_bytep *row_pointers;
 size_t size;
+
  __global__ void
-blurEffect(double *d_kernel, int height, int width,  unsigned char *d_R,  unsigned char *d_G,unsigned char *d_B, int radius, int kernelSize, int operationPerThread)
+blurEffect(double *d_kernel, int height, int width,  unsigned char *d_Red,  unsigned char *d_G,unsigned char *d_B, int radius, int kernelSize, int operationPerThread)
 {
     
     int index = ((blockDim.x * blockIdx.x + threadIdx.x));
@@ -39,8 +40,7 @@ blurEffect(double *d_kernel, int height, int width,  unsigned char *d_R,  unsign
                 for (int l = 0; l < kernelSize; l++)
                 {
                     int x = (j - radius + l + width )% width;
-                    // x = x < 0 ? 0 : x < width ? x : width - 1;
-                    redTemp += d_R[y*width + x] * d_kernel[k*kernelSize + l];
+                    redTemp += d_Red[y*width + x] * d_kernel[k*kernelSize + l];
                     greenTemp += d_G[y*width + x] * d_kernel[k*kernelSize + l];
                     blueTemp += d_B[y*width + x] * d_kernel[k*kernelSize + l];
                     acum += d_kernel[k*kernelSize + l];
@@ -48,16 +48,14 @@ blurEffect(double *d_kernel, int height, int width,  unsigned char *d_R,  unsign
                 }
             }
 
-            d_R[i*width + j] = redTemp/acum;
+            d_Red[i*width + j] = redTemp/acum;
             d_G[i*width + j] = greenTemp/acum;
             d_B[i*width + j] = blueTemp/acum;
         }
     }
 }
 
-void read_png_file(char *filename)
-{
-
+void read_png_file(char *filename){
     FILE *fp = fopen(filename, "rb");
 
     png_structp png = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
@@ -119,10 +117,7 @@ void read_png_file(char *filename)
     fclose(fp);
 }
 
-void write_png_file(char *filename)
-{
-    
-
+void write_png_file(char *filename){
     FILE *fp = fopen(filename, "wb");
     if (!fp)
         abort();
@@ -174,25 +169,6 @@ void write_png_file(char *filename)
 double gaussianFunction(double x, double y, double stdDev){ 
     return exp( -(((x-y)*((x-y)))/(2.0*stdDev*stdDev)));
 }
-
-/*double **createKernel(int tamanio)
-{
-    double **matriz = (double **)malloc(tamanio * sizeof(double *));
-    for (int i = 0; i < tamanio; i++)
-        matriz[i] = (double *)malloc(tamanio * sizeof(double));
-    int radio = floor(tamanio / 2);
-    double sigma = radio * radio;
-    for (int fila = 0; fila < tamanio; fila++)
-    {
-        for (int columna = 0; columna < tamanio; columna++)
-        {
-            double square = (columna - radio) * (columna - radio) + (fila - radio) * (fila - radio);
-            double weight = (exp(-square / (2 * sigma))) / (3.14159264 * 2 * sigma);
-            matriz[fila][columna] = weight;
-        }
-    }
-    return matriz;
-}*/
 
 //Function to create the kernel matrix which will be use to make the blur effect.
 //It uses the gaussian value weighted, it means, multiplied the blur in horizontal
@@ -249,8 +225,7 @@ double *matrix_to_arr(double **M, int rows, int cols){
 
     return arr;
 }
-void getChannels()
-{
+void getChannels(){
     for (int i = 0; i < height; i++)
     {
         png_bytep row = row_pointers[i];
@@ -260,13 +235,11 @@ void getChannels()
             h_R[i * width + j] = (char)px[0];
             h_G[i * width + j] = (char)px[1];
             h_B[i * width + j] = (char)px[2];
-
         }
     }
 }
 
-void makeRowPointer()
-{
+void makeRowPointer(){
     for (int i = 0; i < height; i++)
     {
         png_bytep row = row_pointers[i];
@@ -325,7 +298,7 @@ int main(int argc, char *argv[])
     
     //Asignacion de memoria para cuda
     
-    err = cudaMalloc((void **)&d_R, size);
+    err = cudaMalloc((void **)&d_Red, size);
     if (err != cudaSuccess)
     {
         fprintf(stderr, "Failed to allocate device vector R (error code %s)!\n", cudaGetErrorString(err));
@@ -354,7 +327,7 @@ int main(int argc, char *argv[])
     }
 
     //Copiar memoria de host a device
-    err = cudaMemcpy(d_R, h_R, size, cudaMemcpyHostToDevice);
+    err = cudaMemcpy(d_Red, h_R, size, cudaMemcpyHostToDevice);
     if (err != cudaSuccess)
     {
         fprintf(stderr, "Failed to copy vector R from host to device (error code %s)!\n", cudaGetErrorString(err));
@@ -384,9 +357,8 @@ int main(int argc, char *argv[])
 
     //starting the threads and setting work
     auto startClock = chrono::steady_clock::now();
-    //Se lanza el kernel
-    //blurEffect(double **kernel, int height, int width,  char *d_R,  char *d_G,char *d_B, int radius, int kernelSize, int operationPerThread)
-    blurEffect<<<blocksPerGrid,threadsPerBlock>>>(d_kernel, height, width, d_R, d_G, d_B, radio, tamanio, opt);
+    //starting kernel on GPU
+    blurEffect<<<blocksPerGrid,threadsPerBlock>>>(d_kernel, height, width, d_Red, d_G, d_B, radio, tamanio, opt);
     err = cudaGetLastError();
     if (err != cudaSuccess)
     {
@@ -397,7 +369,7 @@ int main(int argc, char *argv[])
 
     // Copy the device result vector in device memory to the host result vector
     // in host memory.
-    err = cudaMemcpy(h_R, d_R, size, cudaMemcpyDeviceToHost);
+    err = cudaMemcpy(h_R, d_Red, size, cudaMemcpyDeviceToHost);
     if (err != cudaSuccess)
     {    
         fprintf(stderr, "Failed to copy vector R from device to host (error code %s)!\n", cudaGetErrorString(err));
@@ -419,7 +391,7 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Failed to copy vector B from device to host (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
-    cudaFree(d_R);
+    cudaFree(d_Red);
     cudaFree(d_G);
     cudaFree(d_B);
     cudaFree(d_kernel);
