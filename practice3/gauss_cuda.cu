@@ -48,9 +48,11 @@ unsigned char *h_Red, *h_Green, *h_Blue;
                 for (int l = 0; l < kernelSize; l++){
 
                     int x = (j - offset + l + width )% width;
-                    redTemp += d_Red[y*width + x] * d_kernel[k*kernelSize + l];
-                    greenTemp += d_Green[y*width + x] * d_kernel[k*kernelSize + l];
-                    blueTemp += d_Blue[y*width + x] * d_kernel[k*kernelSize + l];
+                    int colorIndex = (y*width) + x;
+
+                    redTemp += d_Red[colorIndex] * d_kernel[k*kernelSize + l];
+                    greenTemp += d_Green[colorIndex] * d_kernel[k*kernelSize + l];
+                    blueTemp += d_Blue[colorIndex] * d_kernel[k*kernelSize + l];
                     average += d_kernel[k*kernelSize + l];    
                 }
             }
@@ -282,7 +284,7 @@ int main(int argc, char *argv[]){
     if(KERNEL_SIZE%2 == 0){
         KERNEL_SIZE = KERNEL_SIZE + 1;
     }
-    
+
     char matrixOffset = (char)floor(KERNEL_SIZE / 2);
     read_png_file(argv[1]);
     int opt = (int)(ceil(height * width/ (threadsPerBlock*blocksPerGrid)));
