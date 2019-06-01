@@ -27,12 +27,13 @@ unsigned char *d_Red, *d_Green, *d_Blue;
 unsigned char *h_Red, *h_Green, *h_Blue;
 
 //Kernel function for device run
- __global__ void blurEffect(double *d_kernel, int height, int width,  unsigned char *d_Red,  unsigned char *d_Green,unsigned char *d_Blue, int radius, int kernelSize, int operationPerThread){
+ __global__ void blurEffect(double *d_kernel, int height, int width,  unsigned char *d_Red,  unsigned char *d_Green,unsigned char *d_Blue, int offset, int kernelSize, int operationPerThread){
     
     int index = ((blockDim.x * blockIdx.x + threadIdx.x));
-    if( index < (height*width) )
-    {
+    if( index < (height*width) ){
+
         for(int count = 0; count < operationPerThread; count ++){
+
             int i = (index*operationPerThread + count) / width;// fila del pixel al que se le hara gauss
             int j = (index*operationPerThread + count) % width;//columna del pixel al que se le hara gauss
 
@@ -40,17 +41,17 @@ unsigned char *h_Red, *h_Green, *h_Blue;
             double blueTemp = 0;
             double greenTemp = 0;
             double acum = 0;
-            for (int k = 0; k < kernelSize; k++ )
-            {
-                int y = (i - radius + k + height)%height;
-                for (int l = 0; l < kernelSize; l++)
-                {
-                    int x = (j - radius + l + width )% width;
+
+            for (int k = 0; k < kernelSize; k++ ){
+
+                int y = (i - offset + k + height)%height;
+                for (int l = 0; l < kernelSize; l++){
+
+                    int x = (j - offset + l + width )% width;
                     redTemp += d_Red[y*width + x] * d_kernel[k*kernelSize + l];
                     greenTemp += d_Green[y*width + x] * d_kernel[k*kernelSize + l];
                     blueTemp += d_Blue[y*width + x] * d_kernel[k*kernelSize + l];
-                    acum += d_kernel[k*kernelSize + l];
-                    
+                    acum += d_kernel[k*kernelSize + l];    
                 }
             }
 
@@ -256,6 +257,7 @@ void makeRowPointer(){
         }
     }
 }
+
 int main(int argc, char *argv[]){
     
     cudaError_t err = cudaSuccess;
@@ -286,7 +288,6 @@ int main(int argc, char *argv[]){
     h_Blue = (unsigned char *)malloc(  size );
     h_Green = (unsigned char *)malloc( size );
   
-    
     
     if (h_Red == NULL || h_Blue == NULL || h_Green == NULL){
         fprintf(stderr, "Failed to allocate host variables\n");
