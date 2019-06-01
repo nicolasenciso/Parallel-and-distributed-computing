@@ -277,6 +277,12 @@ int main(int argc, char *argv[]){
 
     //Creating kernel matrix
     int KERNEL_SIZE = atoi(argv[3]);
+
+    //To make sure the kernel matrix is odd
+    if(KERNEL_SIZE%2 == 0){
+        KERNEL_SIZE = KERNEL_SIZE + 1;
+    }
+    
     char matrixOffset = (char)floor(KERNEL_SIZE / 2);
     read_png_file(argv[1]);
     int opt = (int)(ceil(height * width/ (threadsPerBlock*blocksPerGrid)));
