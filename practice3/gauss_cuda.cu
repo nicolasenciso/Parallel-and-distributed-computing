@@ -28,15 +28,20 @@ unsigned char *h_Red, *h_Green, *h_Blue;
 
 //Kernel function for device run
  __global__ void 
- blurEffect(double *d_kernel, int height, int width,  unsigned char *d_Red,  unsigned char *d_Green,unsigned char *d_Blue, int offset, int kernelSize, int operationPerThread){
+ blurEffect(double *d_kernel, unsigned char *d_Red,  unsigned char *d_Green,unsigned char *d_Blue, int offset, int kernelSize, int operationPerThread, int height, int width){
     
     int index = ((blockDim.x * blockIdx.x + threadIdx.x));
+
+    //to make sure that the index are not going to be on outbound of the image limits
     if( index < (height*width) ){
 
         for(int count = 0; count < operationPerThread; count ++){
 
-            int i = (index*operationPerThread + count) / width;// fila del pixel al que se le hara gauss
-            int j = (index*operationPerThread + count) % width;//columna del pixel al que se le hara gauss
+            //Row in which is going to be applied gauss blur
+            int i = (index*operationPerThread + count) / width;
+
+            //Columns in which is going to be applied gauss blur
+            int j = (index*operationPerThread + count) % width;
 
             double auxRed = 0;
             double auxBlue = 0;
