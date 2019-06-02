@@ -38,9 +38,9 @@ unsigned char *h_Red, *h_Green, *h_Blue;
             int i = (index*operationPerThread + count) / width;// fila del pixel al que se le hara gauss
             int j = (index*operationPerThread + count) % width;//columna del pixel al que se le hara gauss
 
-            double redTemp = 0;
-            double blueTemp = 0;
-            double greenTemp = 0;
+            double auxRed = 0;
+            double auxBlue = 0;
+            double auxGreen = 0;
             double average = 0;
 
             for (int k = 0; k < kernelSize; k++ ){
@@ -52,15 +52,15 @@ unsigned char *h_Red, *h_Green, *h_Blue;
                     int colorIndex = (y*width) + x;
                     int kernelMatrixIndex = (k * kernelSize) + l;
 
-                    redTemp += d_Red[colorIndex] * d_kernel[kernelMatrixIndex];
-                    greenTemp += d_Green[colorIndex] * d_kernel[kernelMatrixIndex];
-                    blueTemp += d_Blue[colorIndex] * d_kernel[kernelMatrixIndex];
+                    auxRed += d_Red[colorIndex] * d_kernel[kernelMatrixIndex];
+                    auxGreen += d_Green[colorIndex] * d_kernel[kernelMatrixIndex];
+                    auxBlue += d_Blue[colorIndex] * d_kernel[kernelMatrixIndex];
                     average += d_kernel[kernelMatrixIndex];    
                 }
             }
-            d_Red[i*width + j] = redTemp/average;
-            d_Green[i*width + j] = greenTemp/average;
-            d_Blue[i*width + j] = blueTemp/average;
+            d_Red[i*width + j] = auxRed/average;
+            d_Green[i*width + j] = auxGreen/average;
+            d_Blue[i*width + j] = auxBlue/average;
         }
     }
 }
@@ -287,7 +287,7 @@ int main(int argc, char *argv[]){
 
     char matrixOffset = (char)floor(KERNEL_SIZE / 2);
     read_png_file(argv[1]);
-    int opt = (int)(ceil(height * width/ (threadsPerBlock*blocksPerGrid)));
+    int operationPerThread = (int)(ceil(height * width/ (threadsPerBlock*blocksPerGrid)));
     
     size_t size = height * width*sizeof(unsigned char);
     
@@ -362,7 +362,7 @@ int main(int argc, char *argv[]){
     auto startClock = chrono::steady_clock::now();
 
     //starting kernel on GPU
-    blurEffect<<<blocksPerGrid,threadsPerBlock>>>(d_kernel, height, width, d_Red, d_Green, d_Blue, matrixOffset, KERNEL_SIZE, opt);
+    blurEffect<<<blocksPerGrid,threadsPerBlock>>>(d_kernel, height, width, d_Red, d_Green, d_Blue, matrixOffset, KERNEL_SIZE, operationPerThread);
     err = cudaGetLastError();
     if (err != cudaSuccess){
         fprintf(stderr, "Failed to launch Blur effect Kernel (error code %s)!\n", cudaGetErrorString(err));
