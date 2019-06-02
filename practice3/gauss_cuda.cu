@@ -290,7 +290,7 @@ int main(int argc, char *argv[]){
     char matrixOffset = (char)floor(KERNEL_SIZE / 2);
     read_png_file(argv[1]);
     int operationPerThread = (int)(ceil(height * width/ (threadsPerBlock*blocksPerGrid)));
-    printf("operationPerThread: %d",operationPerThread);
+    printf("operationPerThread: %d \n",operationPerThread);
     
     size_t size = height * width*sizeof(unsigned char);
     
