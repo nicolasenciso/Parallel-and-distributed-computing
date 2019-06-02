@@ -276,7 +276,7 @@ int main(int argc, char *argv[]){
 	threadsPerBlock = threadsPerBlock*2;
     int blocksPerGrid =   deviceProp.multiProcessorCount;
     printf("threadsPerBlock: %d",threadsPerBlock);
-    printf("blocksPerGrid: %d", blocksPerGrid);
+    printf("blocksPerGrid: %d \n", blocksPerGrid);
     
 
     //Size for kernel matrix
