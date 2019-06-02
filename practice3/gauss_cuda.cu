@@ -284,7 +284,7 @@ int main(int argc, char *argv[]){
 
     //To make sure the kernel matrix is odd
     if(KERNEL_SIZE%2 == 0){
-        KERNEL_SIZE = KERNEL_SIZE + 1;
+        KERNEL_SIZE += 1;
     }
 
     char matrixOffset = (char)floor(KERNEL_SIZE / 2);
