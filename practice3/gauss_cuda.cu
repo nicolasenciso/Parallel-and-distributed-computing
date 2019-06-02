@@ -403,7 +403,7 @@ int main(int argc, char *argv[]){
     //end clock timing
     auto endClock = chrono::steady_clock::now();
     auto finalClock = endClock - startClock;
-    cout<< KERNEL_SIZE << "," << opt << "," << chrono::duration <double, milli> (finalClock).count()<<endl;
+    cout<< KERNEL_SIZE << "," << (threadsPerBlock*blocksPerGrid) << "," << chrono::duration <double, milli> (finalClock).count()<<endl;
     write_png_file(argv[2]);
     
     return 0;
