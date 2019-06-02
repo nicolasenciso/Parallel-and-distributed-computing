@@ -268,7 +268,6 @@ int main(int argc, char *argv[]){
     //To get the number of core(threads) on each block, and the number of blocks per grid
     //this numbers depends on the GPU, to run this part, it is necessary to call the flag:
     //-I /usr/local/cuda/samples/common/inc/   which comes from CUDA libraries
-
     int dev = 0;
     cudaSetDevice(dev);
     cudaDeviceProp deviceProp;
@@ -278,7 +277,7 @@ int main(int argc, char *argv[]){
     int blocksPerGrid =   deviceProp.multiProcessorCount;
     
 
-    //Creating kernel matrix
+    //Size for kernel matrix
     int KERNEL_SIZE = atoi(argv[3]);
 
     //To make sure the kernel matrix is odd
@@ -304,6 +303,7 @@ int main(int argc, char *argv[]){
     }
     getChannels();
     
+    //creating kernel matrix
     double *h_kernel;
     double *d_kernel;
     h_kernel = matrixToArray(createKernel(KERNEL_SIZE), KERNEL_SIZE, KERNEL_SIZE);
@@ -387,6 +387,8 @@ int main(int argc, char *argv[]){
         fprintf(stderr, "Failed to copy variable Blue from device to host (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
+
+    //free memory on device and host
     cudaFree(d_Red);
     cudaFree(d_Green);
     cudaFree(d_Blue);
@@ -401,7 +403,7 @@ int main(int argc, char *argv[]){
     //end clock timing
     auto endClock = chrono::steady_clock::now();
     auto finalClock = endClock - startClock;
-    cout<< KERNEL_SIZE << "," << threadsPerBlock << "," << chrono::duration <double, milli> (finalClock).count()<<endl;
+    cout<< KERNEL_SIZE << "," << opt << "," << chrono::duration <double, milli> (finalClock).count()<<endl;
     write_png_file(argv[2]);
     
     return 0;
