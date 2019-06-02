@@ -370,7 +370,7 @@ int main(int argc, char *argv[]){
     auto startClock = chrono::steady_clock::now();
 
     //starting kernel on GPU
-    blurEffect<<<blocksPerGrid,threadsPerBlock>>>(d_kernel, height, width, d_Red, d_Green, d_Blue, matrixOffset, KERNEL_SIZE, operationPerThread);
+    blurEffect<<<blocksPerGrid,threadsPerBlock>>>(d_kernel, d_Red, d_Green, d_Blue, matrixOffset, KERNEL_SIZE, operationPerThread, height, width);
     err = cudaGetLastError();
     if (err != cudaSuccess){
         fprintf(stderr, "Failed to launch Blur effect Kernel (error code %s)!\n", cudaGetErrorString(err));
