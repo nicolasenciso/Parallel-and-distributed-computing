@@ -35,6 +35,7 @@ unsigned char *h_Red, *h_Green, *h_Blue;
     //to make sure that the index are not going to be on outbound of the image limits
     if( index < (height*width) ){
 
+        //Assigment of workload to each core
         for(int count = 0; count < operationPerThread; count ++){
 
             //Row in which is going to be applied gauss blur
