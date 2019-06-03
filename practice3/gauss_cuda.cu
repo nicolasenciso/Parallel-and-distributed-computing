@@ -294,6 +294,8 @@ int main(int argc, char *argv[]){
 
     char matrixOffset = (char)floor(KERNEL_SIZE / 2);
     read_png_file(argv[1]);
+
+    //Assignment of workload for each CUDA core, launching the double of threads of CUDA cores on the GPU
     int operationPerThread = (int)(ceil(height * width/ (threadsPerBlock*blocksPerGrid)));
     //printf("operationPerThread: %d \n",operationPerThread);
     
