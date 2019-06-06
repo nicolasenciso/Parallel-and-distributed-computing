@@ -10,6 +10,7 @@
 #include <chrono>
 #include <cmath>
 
+//nvcc gauss_cuda.cu -o gauss_cuda -I /usr/local/cuda/samples/common/inc/ -lpng
 //./gauss_cuda hdLancia.png blur/hdLanciaBlur.png 15 | tee -a times/hd-times.txt
 
 using namespace std;
@@ -25,38 +26,47 @@ size_t size;
 unsigned char *d_Red, *d_Green, *d_Blue;
 unsigned char *h_Red, *h_Green, *h_Blue;
 
- __global__ void
-blurEffect(double *d_kernel, int height, int width,  unsigned char *d_Red,  unsigned char *d_Green,unsigned char *d_Blue, int radius, int kernelSize, int operationPerThread)
-{
+//Kernel function for device run
+ __global__ void 
+ blurEffect(double *d_kernel, unsigned char *d_Red,  unsigned char *d_Green,unsigned char *d_Blue, int offset, int kernelSize, int operationPerThread, int height, int width){
     
     int index = ((blockDim.x * blockIdx.x + threadIdx.x));
-    if( index < (height*width) )
-    {
-        for(int count = 0; count < operationPerThread; count ++){
-            int i = (index*operationPerThread + count) / width;// fila del pixel al que se le hara gauss
-            int j = (index*operationPerThread + count) % width;//columna del pixel al que se le hara gauss
 
-            double redTemp = 0;
-            double blueTemp = 0;
-            double greenTemp = 0;
-            double acum = 0;
-            for (int k = 0; k < kernelSize; k++ )
-            {
-                int y = (i - radius + k + height)%height;
-                for (int l = 0; l < kernelSize; l++)
-                {
-                    int x = (j - radius + l + width )% width;
-                    redTemp += d_Red[y*width + x] * d_kernel[k*kernelSize + l];
-                    greenTemp += d_Green[y*width + x] * d_kernel[k*kernelSize + l];
-                    blueTemp += d_Blue[y*width + x] * d_kernel[k*kernelSize + l];
-                    acum += d_kernel[k*kernelSize + l];
-                    
+    //to make sure that the index are not going to be on outbound of the image limits
+    if( index < (height*width) ){
+
+        //Assigment of workload to each core
+        for(int count = 0; count < operationPerThread; count ++){
+
+            //Row in which is going to be applied gauss blur
+            int i = (index*operationPerThread + count) / width;
+
+            //Columns in which is going to be applied gauss blur
+            int j = (index*operationPerThread + count) % width;
+
+            double auxRed = 0;
+            double auxBlue = 0;
+            double auxGreen = 0;
+            double average = 0;
+
+            for (int k = 0; k < kernelSize; k++ ){
+
+                int y = (i - offset + k + height)%height;
+                for (int l = 0; l < kernelSize; l++){
+
+                    int x = (j - offset + l + width )% width;
+                    int colorIndex = (y*width) + x;
+                    int kernelMatrixIndex = (k * kernelSize) + l;
+
+                    auxRed += d_Red[colorIndex] * d_kernel[kernelMatrixIndex];
+                    auxGreen += d_Green[colorIndex] * d_kernel[kernelMatrixIndex];
+                    auxBlue += d_Blue[colorIndex] * d_kernel[kernelMatrixIndex];
+                    average += d_kernel[kernelMatrixIndex];    
                 }
             }
-
-            d_Red[i*width + j] = redTemp/acum;
-            d_Green[i*width + j] = greenTemp/acum;
-            d_Blue[i*width + j] = blueTemp/acum;
+            d_Red[i*width + j] = auxRed/average;
+            d_Green[i*width + j] = auxGreen/average;
+            d_Blue[i*width + j] = auxBlue/average;
         }
     }
 }
@@ -180,14 +190,13 @@ double gaussianFunction(double x, double y, double stdDev){
 //It uses the gaussian value weighted, it means, multiplied the blur in horizontal
 //  with the blur on vertical, and later divide the value in the average of
 //  all the matrix values;
-double **createKernel(int tamanio){
-    int KERNEL_SIZE = tamanio;
+double **createKernel(int KERNEL_SIZE){
     if(KERNEL_SIZE%2 == 0){
         KERNEL_SIZE += 1; // to make sure of kernel with odd size
     }
 
-    double radioEffect = (KERNEL_SIZE - 1) / 2; //radioEffect is a metric to know the scope of the effect
-    double stdDev = radioEffect / 2.;
+    double matrixOffsetEffect = (KERNEL_SIZE - 1) / 2; //matrixOffsetEffect is a metric to know the scope of the effect
+    double stdDev = matrixOffsetEffect / 2.;
     double average = 0;
     double **kernelMatrix = new double *[KERNEL_SIZE]; //Due to c++ is unable to return a matrix
                                                        //it has to be a pointer to an array
@@ -197,8 +206,8 @@ double **createKernel(int tamanio){
 
         for(int j = 0; j < KERNEL_SIZE; j++){ // Multiplied horizontal and vertical blur values
 
-            double blurHorizontal = gaussianFunction(i, radioEffect, stdDev);
-            double blurVertical = gaussianFunction(j, radioEffect, stdDev);
+            double blurHorizontal = gaussianFunction(i, matrixOffsetEffect, stdDev);
+            double blurVertical = gaussianFunction(j, matrixOffsetEffect, stdDev);
 
             kernelMatrix[i][j] = blurHorizontal * blurVertical;
             average += kernelMatrix[i][j];
@@ -220,16 +229,15 @@ double **createKernel(int tamanio){
     return kernelMatrix;
 }
 
-double *matrix_to_arr(double **M, int rows, int cols){
-    double *arr = (double *)malloc(rows * cols * sizeof(double));
+double *matrixToArray(double **matrix, int rows, int cols){
+    double *array = (double *)malloc(rows * cols * sizeof(double));
     int k = 0;
     for(int i = 0; i < rows; i++){
         for(int j = 0; j < cols; j++){
-            arr[k++] = M[i][j];
+            array[k++] = matrix[i][j];
         }
     }
-
-    return arr;
+    return array;
 }
 void getChannels(){
     for (int i = 0; i < height; i++)
@@ -258,14 +266,14 @@ void makeRowPointer(){
         }
     }
 }
-int main(int argc, char *argv[])
-{
 
-    if (argc != 4)
-        abort();  
+int main(int argc, char *argv[]){
+    
     cudaError_t err = cudaSuccess;
-// declarar  la cantidad de hilos segun la gpu
-//-------------------------------------------------
+
+    //To get the number of core(threads) on each block, and the number of blocks per grid
+    //this numbers depends on the GPU, to run this part, it is necessary to call the flag:
+    //-I /usr/local/cuda/samples/common/inc/   which comes from CUDA libraries
     int dev = 0;
     cudaSetDevice(dev);
     cudaDeviceProp deviceProp;
@@ -273,146 +281,141 @@ int main(int argc, char *argv[])
     int threadsPerBlock = _ConvertSMVer2Cores(deviceProp.major, deviceProp.minor);
 	threadsPerBlock = threadsPerBlock*2;
     int blocksPerGrid =   deviceProp.multiProcessorCount;
+    //printf("threadsPerBlock: %d \n",threadsPerBlock);
+    //printf("blocksPerGrid: %d \n", blocksPerGrid);
     
-//-------------------------------------------------
-    int tamanio = atoi(argv[3]);
-    char radio = (char)floor(tamanio / 2);
+
+    //Size for kernel matrix
+    int KERNEL_SIZE = atoi(argv[3]);
+
+    //To make sure the kernel matrix is odd
+    if(KERNEL_SIZE%2 == 0){
+        KERNEL_SIZE += 1;
+    }
+
+    char matrixOffset = (char)floor(KERNEL_SIZE / 2);
     read_png_file(argv[1]);
-    int opt = (int)(ceil(height * width/ (threadsPerBlock*blocksPerGrid)));
+
+    //Assignment of workload for each CUDA core, launching the double of threads of CUDA cores on the GPU
+    //int operationPerThread = (int)(ceil(height * width/ (threadsPerBlock*blocksPerGrid)));
+    int operationPerThread = (int)(ceil(height * width/ (16*blocksPerGrid)));
+    //printf("operationPerThread: %d \n",operationPerThread);
     
     size_t size = height * width*sizeof(unsigned char);
-    // Asignar memoria para cpu
+    
+    // Allocate memory for host
     h_Red = (unsigned char *)malloc( size );
     h_Blue = (unsigned char *)malloc(  size );
     h_Green = (unsigned char *)malloc( size );
   
     
-    
-    if (h_Red == NULL || h_Blue == NULL || h_Green == NULL)
-    {
-        fprintf(stderr, "Failed to allocate host vectors!\n");
+    if (h_Red == NULL || h_Blue == NULL || h_Green == NULL){
+        fprintf(stderr, "Failed to allocate host variables\n");
         exit(EXIT_FAILURE);
     }
     getChannels();
     
- 
-  
-    
+    //creating kernel matrix
     double *h_kernel;
     double *d_kernel;
-    h_kernel = matrix_to_arr(createKernel(tamanio), tamanio, tamanio);
+    h_kernel = matrixToArray(createKernel(KERNEL_SIZE), KERNEL_SIZE, KERNEL_SIZE);
     
-    //Asignacion de memoria para cuda
-    
+    //Memory allocation on device
     err = cudaMalloc((void **)&d_Red, size);
-    if (err != cudaSuccess)
-    {
-        fprintf(stderr, "Failed to allocate device vector R (error code %s)!\n", cudaGetErrorString(err));
+    if (err != cudaSuccess){
+        fprintf(stderr, "Failed to allocate device variable d_Red (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
 
     err = cudaMalloc((void **)&d_Green, size);
-    if (err != cudaSuccess)
-    {
-        fprintf(stderr, "Failed to allocate device vector G (error code %s)!\n", cudaGetErrorString(err));
+    if (err != cudaSuccess){
+        fprintf(stderr, "Failed to allocate device variable d_Green (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
 
     err = cudaMalloc((void **)&d_Blue, size);
-    if (err != cudaSuccess)
-    {
-        fprintf(stderr, "Failed to allocate device vector B (error code %s)!\n", cudaGetErrorString(err));
+    if (err != cudaSuccess){
+        fprintf(stderr, "Failed to allocate device variable d_Blue (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
 
-    err = cudaMalloc((void**)&d_kernel, tamanio*tamanio*sizeof(double));
-    if (err != cudaSuccess)
-    {
+    err = cudaMalloc((void**)&d_kernel, KERNEL_SIZE*KERNEL_SIZE*sizeof(double));
+    if (err != cudaSuccess){
         fprintf(stderr, "Failed to allocate device matrix kernel (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
 
-    //Copiar memoria de host a device
+    //Copy memory from host to device
     err = cudaMemcpy(d_Red, h_Red, size, cudaMemcpyHostToDevice);
-    if (err != cudaSuccess)
-    {
-        fprintf(stderr, "Failed to copy vector R from host to device (error code %s)!\n", cudaGetErrorString(err));
+    if (err != cudaSuccess){
+        fprintf(stderr, "Failed to copy variable d_Red from host to device (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
 
     err = cudaMemcpy(d_Green, h_Green, size, cudaMemcpyHostToDevice);
-    if (err != cudaSuccess)
-    {
-        fprintf(stderr, "Failed to copy vector G from host to device (error code %s)!\n", cudaGetErrorString(err));
+    if (err != cudaSuccess){
+        fprintf(stderr, "Failed to copy variable d_Green from host to device (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
 
     err = cudaMemcpy(d_Blue, h_Blue, size, cudaMemcpyHostToDevice);
-    if (err != cudaSuccess)
-    {
-        fprintf(stderr, "Failed to copy vector B from host to device (error code %s)!\n", cudaGetErrorString(err));
+    if (err != cudaSuccess){
+        fprintf(stderr, "Failed to copy variable d_Blue from host to device (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
     
-    err = cudaMemcpy(d_kernel, h_kernel, tamanio*tamanio*sizeof(double), cudaMemcpyHostToDevice);
-    if (err != cudaSuccess)
-    {
+    err = cudaMemcpy(d_kernel, h_kernel, KERNEL_SIZE*KERNEL_SIZE*sizeof(double), cudaMemcpyHostToDevice);
+    if (err != cudaSuccess){
         fprintf(stderr, "Failed to copy vector kernel from host to device (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
 
     //starting the threads and setting work
     auto startClock = chrono::steady_clock::now();
+
     //starting kernel on GPU
-    blurEffect<<<blocksPerGrid,threadsPerBlock>>>(d_kernel, height, width, d_Red, d_Green, d_Blue, radio, tamanio, opt);
+    blurEffect<<<blocksPerGrid,threadsPerBlock>>>(d_kernel, d_Red, d_Green, d_Blue, matrixOffset, KERNEL_SIZE, operationPerThread, height, width);
     err = cudaGetLastError();
-    if (err != cudaSuccess)
-    {
-        fprintf(stderr, "Failed to launch vectorAdd kernel (error code %s)!\n", cudaGetErrorString(err));
+    if (err != cudaSuccess){
+        fprintf(stderr, "Failed to launch Blur effect Kernel (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
 
-
-    // Copy the device result vector in device memory to the host result vector
-    // in host memory.
+    // Copy results vector from device to host
     err = cudaMemcpy(h_Red, d_Red, size, cudaMemcpyDeviceToHost);
-    if (err != cudaSuccess)
-    {    
-        fprintf(stderr, "Failed to copy vector R from device to host (error code %s)!\n", cudaGetErrorString(err));
+    if (err != cudaSuccess){    
+        fprintf(stderr, "Failed to copy variable Red from device to host (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
 
-    
     err = cudaMemcpy(h_Green, d_Green, size, cudaMemcpyDeviceToHost);
-    if (err != cudaSuccess)
-    {    
-        fprintf(stderr, "Failed to copy vector G from device to host (error code %s)!\n", cudaGetErrorString(err));
+    if (err != cudaSuccess){    
+        fprintf(stderr, "Failed to copy variable Green from device to host (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
 
-    
     err = cudaMemcpy(h_Blue, d_Blue, size, cudaMemcpyDeviceToHost);
-    if (err != cudaSuccess)
-    {    
-        fprintf(stderr, "Failed to copy vector B from device to host (error code %s)!\n", cudaGetErrorString(err));
+    if (err != cudaSuccess){    
+        fprintf(stderr, "Failed to copy variable Blue from device to host (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
+
+    //free memory on device and host
     cudaFree(d_Red);
     cudaFree(d_Green);
     cudaFree(d_Blue);
     cudaFree(d_kernel);
 
-
-  
     free(h_kernel);
     makeRowPointer();
     cudaFree(h_Red);
     cudaFree(h_Green);
     cudaFree(h_Blue);
+    
     //end clock timing
     auto endClock = chrono::steady_clock::now();
     auto finalClock = endClock - startClock;
-    cout<< tamanio << "," << threadsPerBlock << "," << chrono::duration <double, milli> (finalClock).count()<<endl;
+    cout<< KERNEL_SIZE << "," << (threadsPerBlock*blocksPerGrid) << "," << chrono::duration <double, milli> (finalClock).count()<<endl;
     write_png_file(argv[2]);
     
     return 0;
