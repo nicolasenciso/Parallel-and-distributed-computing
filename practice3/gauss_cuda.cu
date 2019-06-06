@@ -298,7 +298,7 @@ int main(int argc, char *argv[]){
 
     //Assignment of workload for each CUDA core, launching the double of threads of CUDA cores on the GPU
     //int operationPerThread = (int)(ceil(height * width/ (threadsPerBlock*blocksPerGrid)));
-    int operationPerThread = (int)(ceil(height * width/ (16*1)));
+    int operationPerThread = (int)(ceil(height * width/ (16*blocksPerGrid)));
     //printf("operationPerThread: %d \n",operationPerThread);
     
     size_t size = height * width*sizeof(unsigned char);
