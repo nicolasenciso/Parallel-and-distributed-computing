@@ -297,7 +297,8 @@ int main(int argc, char *argv[]){
     read_png_file(argv[1]);
 
     //Assignment of workload for each CUDA core, launching the double of threads of CUDA cores on the GPU
-    int operationPerThread = (int)(ceil(height * width/ (threadsPerBlock*blocksPerGrid)));
+    //int operationPerThread = (int)(ceil(height * width/ (threadsPerBlock*blocksPerGrid)));
+    int operationPerThread = (int)(ceil(height * width/ (16*1)));
     //printf("operationPerThread: %d \n",operationPerThread);
     
     size_t size = height * width*sizeof(unsigned char);
