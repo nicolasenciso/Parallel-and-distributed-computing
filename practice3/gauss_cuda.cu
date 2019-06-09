@@ -11,7 +11,7 @@
 #include <cmath>
 
 //nvcc gauss_cuda.cu -o gauss_cuda -I /usr/local/cuda/samples/common/inc/ -lpng
-//./gauss_cuda hdLancia.png blur/hdLanciaBlur.png 15 | tee -a times/hd-times.txt
+//./gauss_cuda hdLancia.png blur/hdLanciaBlur.png 15 2560| tee -a times/hd-times.txt
 
 using namespace std;
 
@@ -279,7 +279,7 @@ int main(int argc, char *argv[]){
     cudaDeviceProp deviceProp;
     cudaGetDeviceProperties(&deviceProp, dev);
     int threadsPerBlock = _ConvertSMVer2Cores(deviceProp.major, deviceProp.minor);
-	threadsPerBlock = threadsPerBlock*2;
+	threadsPerBlock = threadsPerBlock*atoi(argv[4]);
     int blocksPerGrid =   deviceProp.multiProcessorCount;
     //printf("threadsPerBlock: %d \n",threadsPerBlock);
     //printf("blocksPerGrid: %d \n", blocksPerGrid);
