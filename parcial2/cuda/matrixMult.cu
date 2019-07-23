@@ -1,8 +1,8 @@
- #include <stdio.h>
- #include <stdlib.h>
- #include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
  
- #define BLOCK_SIZE 8
+#define BLOCK_SIZE 8
  
  /*
  *********************************************************************
