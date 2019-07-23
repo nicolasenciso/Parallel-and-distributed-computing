@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <sys/time.h>
+#include <cuda_runtime.h>
+#include <chrono>
 
 #define BLOCK_SIZE 8
 
@@ -48,7 +51,8 @@ int main(int argc, char const *argv[]) {
     cudaMallocHost((void **) &h_b, sizeof(int)*n * k);
     cudaMallocHost((void **) &h_c, sizeof(int)*m * k);
     cudaMallocHost((void **) &h_cc, sizeof(int)*m * k);
-
+    
+ auto startClock = chrono::steady_clock::now();
     // random initialize matrix A
     for (int i = 0; i < m; ++i) {
         for (int j = 0; j < n; ++j) {
@@ -121,7 +125,10 @@ int main(int argc, char const *argv[]) {
     } else {
         printf("incorrect results\n");
     }
-
+    //end clock timing
+    auto endClock = chrono::steady_clock::now();
+    auto finalClock = endClock - startClock;
+    cout<< n << "," << chrono::duration <double, milli> (finalClock).count()<<endl;
     // free memory
     cudaFree(d_a);
     cudaFree(d_b);
