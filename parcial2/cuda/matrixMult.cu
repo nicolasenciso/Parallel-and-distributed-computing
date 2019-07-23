@@ -1,9 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-#include <chrono>
-#include <iostream>
-#include <cuda_runtime.h>
 
 #define BLOCK_SIZE 8
 
@@ -23,7 +20,19 @@ __global__ void gpu_matrix_mult(int *a, int *b, int *c, int m, int n, int k) {
 
 
 
+void cpu_matrix_mult(int *h_a, int *h_b, int *h_result, int m, int n, int k) {
+    for (int i = 0; i < m; ++i) {
+        for (int j = 0; j < k; ++j) {
+            int tmp = 0.0;
 
+            for (int h = 0; h < n; ++h) {
+                tmp += h_a[i * n + h] * h_b[h * k + j];
+            }
+
+            h_result[i * k + j] = tmp;
+        }
+    }
+}
 
 
 int main(int argc, char const *argv[]) {
@@ -54,7 +63,7 @@ int main(int argc, char const *argv[]) {
         }
     }
 
-    float gpu_elapsed_time_ms;
+    float gpu_elapsed_time_ms, cpu_elapsed_time_ms;
     // some events to count the execution time
     cudaEvent_t start, stop;
     cudaEventCreate(&start);
@@ -85,12 +94,13 @@ int main(int argc, char const *argv[]) {
     //  printf("Time elapsed on matrix multiplication of %dx%d . %dx%d on GPU: %f ms.\n\n", m, n, n, k, gpu_elapsed_time_ms);
     // start the CPU version
     cudaEventRecord(start, 0);
-    
+    cpu_matrix_mult(h_a, h_b, h_cc, m, n, k);
     cudaEventRecord(stop, 0);
     cudaEventSynchronize(stop);
-    cudaEventElapsedTime(start, stop);
-   
-    
+    cudaEventElapsedTime(&cpu_elapsed_time_ms, start, stop);
+    //printf("Time elapsed on matrix multiplication of %dx%d . %dx%d on CPU: %f ms.\n\n", m, n, n, k, cpu_elapsed_time_ms);
+    // validate results computed by GPU
+    int all_ok = 1;
 
     for (int i = 0; i < m; ++i) {
         for (int j = 0; j < k; ++j) {
@@ -103,7 +113,15 @@ int main(int argc, char const *argv[]) {
         //printf("\n");
     }
 
-   
+    // roughly compute speedup
+    if (all_ok) {
+        //  printf("all results are correct!!!, speedup = %f\n", cpu_elapsed_time_ms / gpu_elapsed_time_ms);
+        printf("%d\t%d\t%f\n", n, atoi(argv[2]), cpu_elapsed_time_ms / gpu_elapsed_time_ms);
+
+    } else {
+        printf("incorrect results\n");
+    }
+
     // free memory
     cudaFree(d_a);
     cudaFree(d_b);
