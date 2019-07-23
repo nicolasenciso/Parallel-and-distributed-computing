@@ -4,7 +4,7 @@
 #include <sys/time.h>
 #include <cuda_runtime.h>
 #include <chrono>
-
+using namespace std;
 #define BLOCK_SIZE 8
 
 __global__ void gpu_matrix_mult(int *a, int *b, int *c, int m, int n, int k) {
