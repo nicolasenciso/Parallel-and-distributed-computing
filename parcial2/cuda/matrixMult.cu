@@ -3,24 +3,7 @@
  #include <assert.h>
  
  #define BLOCK_SIZE 8
- 
- /*
- *********************************************************************
- function name: gpu_matrix_mult
- description: dot product of two matrix (not only square)
- parameters: 
-             &a GPU device pointer to a m X n matrix (A)
-             &b GPU device pointer to a n X k matrix (B)
-             &c GPU device output purpose pointer to a m X k matrix (C) 
-             to store the result
- Note:
-     grid and block should be configured as:
-         dim3 dimGrid((k + BLOCK_SIZE - 1) / BLOCK_SIZE, (m + BLOCK_SIZE - 1) / BLOCK_SIZE);
-         dim3 dimBlock(BLOCK_SIZE, BLOCK_SIZE);
-     further sppedup can be obtained by using shared memory to decrease global memory access times
- return: none
- *********************************************************************
- */
+
  __global__ void gpu_matrix_mult(int *a,int *b, int *c, int m, int n, int k)
  { 
      int row = blockIdx.y * blockDim.y + threadIdx.y; 
@@ -37,19 +20,7 @@
  } 
  
 
- /*
- *********************************************************************
- function name: cpu_matrix_mult
- description: dot product of two matrix (not only square) in CPU, 
-              for validating GPU results
- parameters: 
-             &a CPU host pointer to a m X n matrix (A)
-             &b CPU host pointer to a n X k matrix (B)
-             &c CPU host output purpose pointer to a m X k matrix (C) 
-             to store the result
- return: none
- *********************************************************************
- */
+
  void cpu_matrix_mult(int *h_a, int *h_b, int *h_result, int m, int n, int k) {
      for (int i = 0; i < m; ++i) 
      {
@@ -65,15 +36,7 @@
      }
  }
  
- /*
- *********************************************************************
- function name: main
- description: test and compare
- parameters: 
-             none
- return: none
- *********************************************************************
- */
+ 
  int main(int argc, char const *argv[])
  {
      int m, n, k;
