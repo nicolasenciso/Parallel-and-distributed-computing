@@ -1,8 +1,8 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <assert.h>
  
-#define BLOCK_SIZE 8
+ #define BLOCK_SIZE 8
  
  /*
  *********************************************************************
@@ -158,7 +158,7 @@
 
      // Transefr results from device to host 
      cudaMemcpy(h_c, d_c, sizeof(int)*m*k, cudaMemcpyDeviceToHost);
-     //cudaThreadSynchronize();
+     cudaThreadSynchronize();
      // time counting terminate
      cudaEventRecord(stop, 0);
      cudaEventSynchronize(stop);
